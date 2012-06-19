@@ -111,7 +111,7 @@ public class Serial implements SerialPortEventListener {
         if ((CommPortIdentifier.PORT_SERIAL == portId.getPortType()) && (portId.getName().equals(iname))) {
           port = (SerialPort) portId.open("tap", 2000);
           port.setSerialPortParams(irate, 8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-          port.close();				
+          port.close();
           result = true;
         }
       }
@@ -271,7 +271,7 @@ public class Serial implements SerialPortEventListener {
               System.out.print((char) input.read());
             if (this.consumer != null)
               this.consumer.message("" + (char) input.read());
-            
+
             /*
             System.err.println(input.available() + " " + 
                                ((char) buffer[bufferLast-1]));

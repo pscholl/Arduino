@@ -24,6 +24,7 @@
 package processing.app;
 
 import processing.app.debug.AvrdudeUploader;
+import processing.app.debug.DfuUploader;
 import processing.app.debug.Compiler;
 import processing.app.debug.RunnerException;
 import processing.app.debug.Sizer;
@@ -1665,9 +1666,15 @@ public class Sketch {
 
     Uploader uploader;
 
+    String protocol = Base.getBoardPreferences().get("upload.protocol");
+
     // download the program
     //
-    uploader = new AvrdudeUploader();
+    if (protocol.equals("dfu"))
+      uploader = new DfuUploader();
+    else
+      uploader = new AvrdudeUploader();
+
     boolean success = uploader.uploadUsingPreferences(buildPath,
                                                       suggestedClassName,
                                                       usingProgrammer);

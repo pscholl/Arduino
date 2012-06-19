@@ -209,6 +209,28 @@ micro.build.variant=micro
 
 ##############################################################
 
+jnode.name=jNode
+jnode.upload.protocol=dfu
+#jnode.upload.maximum_size=28672
+#jnode.upload.speed=57600
+#jnode.upload.disable_flushing=true
+#jnode.bootloader.low_fuses=0xff
+#jnode.bootloader.high_fuses=0xd8
+#jnode.bootloader.extended_fuses=0xcb
+#jnode.bootloader.path=caterina
+#jnode.bootloader.file=Caterina-Leonardo.hex
+#jnode.bootloader.unlock_bits=0x3F
+#jnode.bootloader.lock_bits=0x2F
+jnode.build.mcu=atmega32u4
+jnode.build.f_cpu=16000000L
+jnode.build.vid=0x2341
+jnode.build.pid=0x8036
+jnode.build.core=arduino
+jnode.build.variant=jnode
+
+##############################################################
+
+
 mini328.name=Arduino Mini w/ ATmega328
 
 mini328.upload.protocol=arduino
