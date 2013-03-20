@@ -572,6 +572,7 @@ public class Compiler implements MessageConsumer {
     List baseCommandCompiler = new ArrayList(Arrays.asList(new String[] {
       avrBasePath + "avr-gcc",
       "-c", // compile, don't link
+      "-std=gnu99",
       "-g", // include debugging info (so errors include line numbers)
       "-Os", // optimize for size
       Preferences.getBoolean("build.verbose") ? "-Wall" : "-w", // show warnings if verbose
