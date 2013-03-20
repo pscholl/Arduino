@@ -380,7 +380,7 @@
   
   <target name="linux64-run" depends="linux64-build" 
 	  description="Run Linux (64-bit) version">
-    <exec executable="./linux/work/arduino" spawn="false"/>
+	<exec executable="./linux/work/arduino" spawn="false"/>
   </target>
 
   <target name="linux-dist" depends="build" 
