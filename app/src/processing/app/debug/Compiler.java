@@ -550,6 +550,7 @@ public class Compiler implements MessageConsumer {
       "-assembler-with-cpp",
       "-mmcu=" + boardPreferences.get("build.mcu"),
       "-DF_CPU=" + boardPreferences.get("build.f_cpu"),      
+      "-DF_USB=" + boardPreferences.get("build.f_cpu"),        
       "-DARDUINO=" + Base.REVISION,
       "-DUSB_VID=" + boardPreferences.get("build.vid"),
       "-DUSB_PID=" + boardPreferences.get("build.pid"),
@@ -580,6 +581,7 @@ public class Compiler implements MessageConsumer {
       "-fdata-sections",
       "-mmcu=" + boardPreferences.get("build.mcu"),
       "-DF_CPU=" + boardPreferences.get("build.f_cpu"),
+      "-DF_USB=" + boardPreferences.get("build.f_cpu"),   
       "-MMD", // output dependancy info
       "-DUSB_VID=" + boardPreferences.get("build.vid"),
       "-DUSB_PID=" + boardPreferences.get("build.pid"),
@@ -613,6 +615,7 @@ public class Compiler implements MessageConsumer {
       "-fdata-sections",
       "-mmcu=" + boardPreferences.get("build.mcu"),
       "-DF_CPU=" + boardPreferences.get("build.f_cpu"),
+      "-DF_USB=" + boardPreferences.get("build.f_cpu"),	      
       "-MMD", // output dependancy info
       "-DUSB_VID=" + boardPreferences.get("build.vid"),
       "-DUSB_PID=" + boardPreferences.get("build.pid"),      

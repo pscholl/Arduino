@@ -31,21 +31,6 @@ struct ring_buffer;
 
 class HardwareSerial : public Stream
 {
-  private:
-    ring_buffer *_rx_buffer;
-    ring_buffer *_tx_buffer;
-    volatile uint8_t *_ubrrh;
-    volatile uint8_t *_ubrrl;
-    volatile uint8_t *_ucsra;
-    volatile uint8_t *_ucsrb;
-    volatile uint8_t *_ucsrc;
-    volatile uint8_t *_udr;
-    uint8_t _rxen;
-    uint8_t _txen;
-    uint8_t _rxcie;
-    uint8_t _udrie;
-    uint8_t _u2x;
-    bool transmitting;
   public:
     HardwareSerial(ring_buffer *rx_buffer, ring_buffer *tx_buffer,
       volatile uint8_t *ubrrh, volatile uint8_t *ubrrl,
@@ -94,22 +79,8 @@ class HardwareSerial : public Stream
 #define SERIAL_7O2 0x3C
 #define SERIAL_8O2 0x3E
 
-#if defined(UBRRH) || defined(UBRR0H)
-  extern HardwareSerial Serial;
-#elif defined(USBCON)
-  #include "USBAPI.h"
-//  extern HardwareSerial Serial_;  
-#endif
-#if defined(UBRR1H)
-  extern HardwareSerial Serial1;
-#endif
-#if defined(UBRR2H)
-  extern HardwareSerial Serial2;
-#endif
-#if defined(UBRR3H)
-  extern HardwareSerial Serial3;
-#endif
+extern HardwareSerial Serial;
 
-extern void serialEventRun(void) __attribute__((weak));
+// extern void serialEventRun(void) __attribute__((weak));
 
 #endif
