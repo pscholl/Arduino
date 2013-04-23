@@ -1,20 +1,20 @@
 #include <Arduino.h>
 
+#include <DualVirtualSerial.h>
+
 int main(void)
 {
+	/* Arduino  init and setup */
+	lufaInit();
 	init();
 
-#if defined(USBCON)
-	USBDevice.attach();
-#endif
-	
 	setup();
+	
     
 	for (;;) {
+		lufaLoop();
 		loop();
-		if (serialEventRun) serialEventRun();
 	}
         
 	return 0;
 }
-

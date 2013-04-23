@@ -190,7 +190,7 @@ public class Compiler implements MessageConsumer {
     // 4. link it all together into the .elf file
     // For atmega2560, need --relax linker option to link larger
     // programs correctly.
-    String optRelax = "";
+    String optRelax = ",--relax";
     String atmega2560 = new String ("atmega2560");
     if ( atmega2560.equals(boardPreferences.get("build.mcu")) ) {
         optRelax = new String(",--relax");
@@ -548,8 +548,10 @@ public class Compiler implements MessageConsumer {
       "-c", // compile, don't link
       "-g", // include debugging info (so errors include line numbers)
       "-assembler-with-cpp",
+      "-fno-strict-aliasing",
       "-mmcu=" + boardPreferences.get("build.mcu"),
       "-DF_CPU=" + boardPreferences.get("build.f_cpu"),      
+      "-DF_USB=" + boardPreferences.get("build.f_cpu"),        
       "-DARDUINO=" + Base.REVISION,
       "-DUSB_VID=" + boardPreferences.get("build.vid"),
       "-DUSB_PID=" + boardPreferences.get("build.pid"),
@@ -578,8 +580,10 @@ public class Compiler implements MessageConsumer {
       Preferences.getBoolean("build.verbose") ? "-Wall" : "-w", // show warnings if verbose
       "-ffunction-sections", // place each function in its own section
       "-fdata-sections",
+      "-fno-strict-aliasing",
       "-mmcu=" + boardPreferences.get("build.mcu"),
       "-DF_CPU=" + boardPreferences.get("build.f_cpu"),
+      "-DF_USB=" + boardPreferences.get("build.f_cpu"),   
       "-MMD", // output dependancy info
       "-DUSB_VID=" + boardPreferences.get("build.vid"),
       "-DUSB_PID=" + boardPreferences.get("build.pid"),
@@ -611,8 +615,10 @@ public class Compiler implements MessageConsumer {
       "-fno-exceptions",
       "-ffunction-sections", // place each function in its own section
       "-fdata-sections",
+      "-fno-strict-aliasing",
       "-mmcu=" + boardPreferences.get("build.mcu"),
       "-DF_CPU=" + boardPreferences.get("build.f_cpu"),
+      "-DF_USB=" + boardPreferences.get("build.f_cpu"),	      
       "-MMD", // output dependancy info
       "-DUSB_VID=" + boardPreferences.get("build.vid"),
       "-DUSB_PID=" + boardPreferences.get("build.pid"),      
