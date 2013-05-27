@@ -56,26 +56,27 @@
 #define PWR_BUTTON  _BV(4) /* PB4, input pin */
 #define PWR_SENSORS _BV(6) /* PC6, on by default, toggle for reset */
 
+static uint8_t usbtouart[128], uarttousb[128], serialRx[128]; // need size of power two!
 static struct ringbuf USARTtoUSB_Buffer, USBtoUSART_Buffer;
-static uint8_t usbtouart[128], uarttousb[128]; // need size of power two!
-
+struct ringbuf serialRx_Buffer;
 /** used to toggle the reset lines of the Jennic module, entering programming
  * mode and resetting */
 static volatile bool jennic_reset_event = false;
-
+static volatile uint8_t cdc2_event = 0;
 
 /** actual jennic mode */
 static bool jennic_in_programming_mode = false;
 
+/** handle incoming Data on the Arduino CDC tty */
+void CDC_Arduino_In_Task(void);
 
 /** change serial configuration between atmega and jennic */
 void Serial_Config(uint32_t Baudrate, uint8_t DataBits, uint8_t StopBits, uint8_t Parity);
 /** restart jennic and set to programming or normal mode */
 void Jennic_Set_Mode(bool programming);
-
 /** handle incoming serial data from jennic */
 void Jennic_In_Task(void);
-/** handle incoming data on the CDC tty */
+/** handle incoming data on the Jennic CDC tty */
 void CDC_In_Task(void);
 
 /** CDC Interface for Arduino
@@ -83,25 +84,25 @@ void CDC_In_Task(void);
 USB_ClassInfo_CDC_Device_t VirtualSerial_CDC0_Interface =
 {
   .Config =
-  {
+ {
     .ControlInterfaceNumber   = 0,
     .DataINEndpoint           =
     {
       .Address                = CDC1_TX_EPADDR,
       .Size                   = CDC1_TXRX_EPSIZE,
-      .Banks                  = 1,
+      .Banks                  = 2,
     },
     .DataOUTEndpoint                =
     {
       .Address                = CDC1_RX_EPADDR,
       .Size                   = CDC1_TXRX_EPSIZE,
-      .Banks                  = 1,
+      .Banks                  = 2,
     },
     .NotificationEndpoint           =
     {
       .Address                = CDC1_NOTIFICATION_EPADDR,
       .Size                   = CDC_NOTIFICATION_EPSIZE,
-      .Banks                  = 1,
+      .Banks                  = 2,
     },
   },
 };
@@ -116,19 +117,19 @@ USB_ClassInfo_CDC_Device_t VirtualSerial_CDC1_Interface =
     {
       .Address                = CDC2_TX_EPADDR,
       .Size                   = CDC2_TXRX_EPSIZE,
-      .Banks                  = 1,
+      .Banks                  = 2,
     },
     .DataOUTEndpoint                =
     {
       .Address                = CDC2_RX_EPADDR,
       .Size                   = CDC2_TXRX_EPSIZE,
-      .Banks                  = 1,
+      .Banks                  = 2,
     },
     .NotificationEndpoint           =
     {
       .Address                = CDC2_NOTIFICATION_EPADDR,
       .Size                   = CDC_NOTIFICATION_EPSIZE,
-      .Banks                  = 1,
+      .Banks                  = 2,
     },
   },
 };
@@ -148,64 +149,69 @@ void lufaInit(void)
   ringbuf_init(&USARTtoUSB_Buffer, uarttousb, sizeof(uarttousb));
   ringbuf_init(&USBtoUSART_Buffer, usbtouart, sizeof(uarttousb));
 
+  ringbuf_init(&serialRx_Buffer, serialRx, sizeof(serialRx));
+  
+  //sei();
   //GlobalInterruptEnable();
+  //clock_prescale_set(clock_div_1);
+
 
   /* restart jennic and set to normal mode. XXX needs serial line ops */
   Serial_Config(1000000, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
   Jennic_Set_Mode(false);
 
-  clock_prescale_set(clock_div_1);
 }
 void lufaLoop(void)
 {
-  {
-  char buf[256];
-  uint32_t m = millis();
-  snprintf(buf,sizeof(buf),"millis: %u\n",m);
-  CDC_Device_SendString(&VirtualSerial_CDC0_Interface, buf);
-  }
-    /* Jennic Mode and Baudrate */
-//CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, TCNT0);
-//CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, TCCR0A);
-//CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, TCCR0B);
-//CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, 0);
-//CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, 0xFF);
-//CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, 0xFF);
-//CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, 0xFF);
-    if (jennic_reset_event)
-    {
-      
-	CDC_Device_SendString(&VirtualSerial_CDC0_Interface, "jennic_reset_event set");
-      if (!jennic_in_programming_mode)
-      {
-        jennic_in_programming_mode = true;
-        Serial_Config(38400, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
-        Jennic_Set_Mode(true); /* pull jennic into programming mode */
-      }
-      else
-      {
-        jennic_in_programming_mode = false;
-        Serial_Config(1000000, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
-        Jennic_Set_Mode(false); /* pull jennic into normal mode */
+	CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
+	CDC_Arduino_In_Task();
 
-        /* reset USB connection */
-        //USB_Detach();
-        //_delay_ms(5000);
-        //USB_Attach();
-      }
-      jennic_reset_event = false;
-    }
+  // Debug
+  if(false){
+  	char buf[64];	
+  	snprintf(buf,sizeof(buf),"CDC2_Event: %d\n",cdc2_event);
+  	CDC_Device_SendString(&VirtualSerial_CDC0_Interface, buf);
+	///CDC_Device_SendString(&VirtualSerial_CDC0_Interface, "cdc2 event\n");
+	delay(100);
+	CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
+	USB_USBTask();
+	delay(900);
+	}
 
-    /* do house-keeping */
-    USB_USBTask();
-    Jennic_In_Task();
-    CDC_In_Task();
-    CDC_Device_USBTask(&VirtualSerial_CDC1_Interface);
-    CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
+    do{
+  	  if (jennic_reset_event)
+  	  {
+  	    
+  	    if (!jennic_in_programming_mode)
+  	    {
+  	      jennic_in_programming_mode = true;
+  	      Serial_Config(38400, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
+  	      Jennic_Set_Mode(true); /* pull jennic into programming mode */
+  	    }
+  	    else
+  	    {
+  	      jennic_in_programming_mode = false;
+  	      Serial_Config(1000000, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
+  	      Jennic_Set_Mode(false); /* pull jennic into normal mode */
 
-    if ( ringbuf_elements(&USBtoUSART_Buffer) && !(UCSR1B & (1 << UDRIE1)) )
-      UCSR1B |= (1 << UDRIE1);
-  
+  	    }
+  	    jennic_reset_event = false;
+  	  }
+
+  	  //if(jennic_in_programming_mode){
+  	  Jennic_In_Task();
+  	  CDC_In_Task();
+  	  CDC_Device_USBTask(&VirtualSerial_CDC1_Interface);
+	  
+	  delay(5);
+  	  USB_USBTask();
+  	  /* do house-keeping */
+  	  
+	  if ( ringbuf_elements(&USBtoUSART_Buffer) && !(UCSR1B & (1 << UDRIE1)) )
+  	    UCSR1B |= (1 << UDRIE1);
+  	}while(jennic_in_programming_mode);
+
+
 }
 
 /** Configures the board hardware and chip peripherals for the demo's functionality. */
@@ -216,8 +222,7 @@ void SetupHardware(void)
   wdt_disable();
 
   /* enable clock division, run on 16MHz */
-  //clock_prescale_set(clock_div_1);
-  //clock_init();
+  clock_prescale_set(clock_div_1);
 
   /* disable JTAG since we use the pins for I/O, e.g. the STBY pin */
   JTAG_DISABLE();
@@ -233,6 +238,9 @@ void SetupHardware(void)
   /* enable pushbutton */
   DDRB |= ~(PWR_BUTTON);
 
+  /* enable Interrupts */
+  //GlobalInterruptEnable();
+  
   /* set default uart configuration */
   Serial_Config(1000000, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
 
@@ -246,64 +254,27 @@ void SetupHardware(void)
 /** Event handler for the library USB Connection event. */
 void EVENT_USB_Device_Connect(void)
 {
-  //sleep_disable();
 }
 
 /** Event handler for the library USB Disconnection event. */
 void EVENT_USB_Device_Disconnect(void)
 {
-  /* go to deep-sleep */
-  //set_sleep_mode(SLEEP_MODE_STANDBY);
-  //sleep_mode();
 }
 
 /** Event handler for the library USB Configuration Changed event. */
 void EVENT_USB_Device_ConfigurationChanged(void)
 {
-  bool ConfigSuccess = true;
-
   /* configure specific interfaces */
-  ConfigSuccess &= CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC0_Interface);
-  ConfigSuccess &= CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC1_Interface);
+  CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC0_Interface);
+  CDC_Device_ConfigureEndpoints(&VirtualSerial_CDC1_Interface);
 
-  /* if successful tell jennic */
-  //if (ConfigSuccess)
-  //{
-  //  if (rndis)
-  //  {
-  //    /* activate RNDIS on jennic */
-  //    Serial_SendByte(SLIP_END);
-  //    Serial_SendByte('R');
-  //    Serial_SendByte('N');
-  //    Serial_SendByte('D');
-  //    Serial_SendByte('I');
-  //    Serial_SendByte('S');
-  //    Serial_SendByte(SLIP_END);
-  //  }
-  //  else
-  //  {
-  //    /* stop SD access on jennic */
-  //    Serial_SendByte(SLIP_END);
-  //    Serial_SendByte('S');
-  //    Serial_SendByte('D');
-  //    Serial_SendByte(SLIP_END);
-
-  //    SDManager_Init();
-  //  }
-  //}
 }
 
 /** Event handler for the library USB Control Request reception event. */
 void EVENT_USB_Device_ControlRequest(void)
 {
- 
-  if(USB_ControlRequest.wIndex == 0)
-  {
-  	CDC_Device_ProcessControlRequest(&VirtualSerial_CDC0_Interface);
-  }
-  else{
+	CDC_Device_ProcessControlRequest(&VirtualSerial_CDC0_Interface);
 	CDC_Device_ProcessControlRequest(&VirtualSerial_CDC1_Interface);
-  }
 }
 
 /** ISR to manage the reception of data from the serial port, placing received bytes into a circular buffer
@@ -340,7 +311,7 @@ void EVENT_CDC_Device_LineEncodingChanged(USB_ClassInfo_CDC_Device_t* const CDCI
 
 	if(CDCInterfaceInfo->Config.ControlInterfaceNumber == 2 && jennic_in_programming_mode)
 	{
-  /* only allowed in programming mode through programmer (jenprog) */
+  	/* only allowed in programming mode through programmer (jenprog) */
     	Serial_Config(CDCInterfaceInfo->State.LineEncoding.BaudRateBPS, 
             CDCInterfaceInfo->State.LineEncoding.DataBits, 
             CDCInterfaceInfo->State.LineEncoding.CharFormat, 
@@ -354,8 +325,10 @@ void EVENT_CDC_Device_LineEncodingChanged(USB_ClassInfo_CDC_Device_t* const CDCI
  */
 void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo)
 {
+	//CDC_Device_SendString(&VirtualSerial_CDC0_Interface, "CDC_Device_ControlLineStateChanged");
 	if(CDCInterfaceInfo->Config.ControlInterfaceNumber == 2)
         {
+	//CDC_Device_SendString(&VirtualSerial_CDC0_Interface, "ContlEv Int2\n");
 	/* fire a reset jennic event iff there is a high-low-high transition within
   	 * SWITCH_TIMEOUT ms on the dtr line */
   		// static clock_time_t previous_change = 0;
@@ -367,7 +340,11 @@ void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const C
   		{
     			unsigned long delay = millis()-jennic_reset_time;
     			currentDTRState    = (CDCInterfaceInfo->State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR);
-    			jennic_reset_event = currentDTRState && (delay < 2500);
+			
+			if(delay < 250 && currentDTRState){
+				jennic_reset_event = true;
+			}
+			//jennic_reset_event = currentDTRState && (delay < 250);
     			jennic_reset_time    = millis(); /* returns the usb frame clock in ms */
   		}
 	}
@@ -446,7 +423,6 @@ void Serial_Config(uint32_t Baudrate, uint8_t DataBits, uint8_t StopBits, uint8_
 /** restart jennic and set to programming or normal mode */
 void Jennic_Set_Mode(bool programming)
 {
-
   //SPI_Disable();
   SPCR &= ~_BV(SPE);
 
@@ -455,32 +431,51 @@ void Jennic_Set_Mode(bool programming)
   PORTC &= ~(JEN_RESETN);
    DDRC |= JEN_RESETN;
    DDRB |= JEN_SPIMISO;
-  _delay_ms(5);
+  //_delay_ms(5);
+  delay(5);
 
   if (programming)
   {
     DDRC &= ~JEN_RESETN;
-    _delay_ms(10);
+    //_delay_ms(10);
+    delay(10);
     DDRB &= ~JEN_SPIMISO;
   }
   else
   {
     DDRB &= ~JEN_SPIMISO;
-    _delay_ms(10);
+    //_delay_ms(10);
+    delay(10);
     DDRC &= ~JEN_RESETN;
   }
 
 
 }
 
+void CDC_Arduino_In_Task()
+{
+uint16_t bytes = CDC_Device_BytesReceived(&VirtualSerial_CDC0_Interface);
+while(bytes--){
+/* Read bytes from the USB OUT endpoint and store it for the Arduino Serial Class */
+ if ( ringbuf_elements(&serialRx_Buffer) < ringbuf_size(&serialRx_Buffer)-2 ) {
+   int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC0_Interface);
+   if ( !(ReceivedByte < 0) )
+     ringbuf_put(&serialRx_Buffer, ReceivedByte);
+ }
+ else{
+ return;
+ }
+ } // end while
+}
+
 void CDC_In_Task()
 {
-  /* Read bytes from the USB OUT endpoint and transmit to jennic if programming mode */
-  if ( ringbuf_elements(&USBtoUSART_Buffer) < ringbuf_size(&USBtoUSART_Buffer)-2 ) {
-    int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC1_Interface);
-    if ( !(ReceivedByte < 0) )
-      ringbuf_put(&USBtoUSART_Buffer, ReceivedByte);
-  }
+ /* Read bytes from the USB OUT endpoint and transmit to jennic if programming mode */
+ if ( ringbuf_elements(&USBtoUSART_Buffer) < ringbuf_size(&USBtoUSART_Buffer)-2 ) {
+   int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC1_Interface);
+   if ( !(ReceivedByte < 0) )
+     ringbuf_put(&USBtoUSART_Buffer, ReceivedByte);
+ }
 }
 
 void Jennic_In_Task()
@@ -492,7 +487,7 @@ void Jennic_In_Task()
     return;
 
   /* Read bytes from the USART receive buffer and create ethernet frame or send with CDC */
-  while (ringbuf_elements(&USARTtoUSB_Buffer))
+  if (ringbuf_elements(&USARTtoUSB_Buffer))
   {
     uint8_t byte = ringbuf_get(&USARTtoUSB_Buffer);
 
@@ -504,4 +499,3 @@ void Jennic_In_Task()
     }
   }
 }
-

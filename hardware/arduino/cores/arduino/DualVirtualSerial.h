@@ -86,8 +86,19 @@ extern "C"{
 
 		void EVENT_CDC_Device_LineEncodingChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo);
 		void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo);
-		
-		
+
+struct ringbuf {
+  uint8_t *data;
+    uint8_t mask;
+
+      /* XXX these must be 8-bit quantities to avoid race conditions. */
+        uint8_t put_ptr, get_ptr;
+};
+
+
+extern struct ringbuf serialRx_Buffer;
+extern USB_ClassInfo_CDC_Device_t VirtualSerial_CDC0_Interface;
+
 #ifdef __cplusplus
 }
 #endif

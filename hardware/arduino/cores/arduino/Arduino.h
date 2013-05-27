@@ -73,6 +73,7 @@ extern "C"{
 #define interrupts() sei()
 #define noInterrupts() cli()
 
+// TODO check!
 #define clockCyclesPerMicrosecond() ( F_CPU / 1000000L )
 #define clockCyclesToMicroseconds(a) ( (a) / clockCyclesPerMicrosecond() )
 #define microsecondsToClockCycles(a) ( (a) * clockCyclesPerMicrosecond() )
@@ -190,7 +191,8 @@ extern const uint8_t PROGMEM digital_pin_to_timer_PGM[];
 #ifdef __cplusplus
 #include "WCharacter.h"
 #include "WString.h"
-#include "HardwareSerial.h"
+//#include "HardwareSerial.h"
+#include "SerialCDC.h"
 
 uint16_t makeWord(uint16_t w);
 uint16_t makeWord(byte h, byte l);

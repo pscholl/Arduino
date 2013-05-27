@@ -1,12 +1,11 @@
 #include <Arduino.h>
-
 #include <DualVirtualSerial.h>
 
 int main(void)
 {
 	/* Arduino  init and setup */
-	lufaInit();
 	init();
+	lufaInit();
 
 	setup();
 	
