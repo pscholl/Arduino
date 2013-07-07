@@ -97,6 +97,8 @@ struct ringbuf {
 
 
 extern struct ringbuf serialRx_Buffer;
+extern struct ringbuf USBtoUSART_Buffer;
+extern struct ringbuf USARTtoUSB_Buffer;
 extern USB_ClassInfo_CDC_Device_t VirtualSerial_CDC0_Interface;
 
 #ifdef __cplusplus

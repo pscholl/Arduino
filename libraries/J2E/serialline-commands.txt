@@ -1,0 +1,51 @@
+
+RPC - Format
+
+1 byte = opCode
+1 byte = payload-length
+x bytes = payload
+
+
+"Sockets" must be considered as a service. The service is either an
+conection from the Jennic to another Node, or an open Server
+running on the Jennic. Therefore the connections from another
+Node to a Jennic server may be returned as a "Socket".
+
+~ 23 Serial Line RPCs (without UDP)
+
+Ethernet
+calls: 
+- set MAC Address
+- set IP Address
+- set DNS Server Address
+- set Subnet Mask
+- set Gateway IP
+- ask Jennic for an IP Address via DHCP
+- ask Jennic to renew DHCP Lease
+- ask Jennic for IP Address
+- ask Jennic for DNS Server
+- ask Jennic for Subnet Mask
+- ask Jennic for Gateway IP
+
+
+SerialMux
+(de)Multiplexes between the different sockets (1...n) over the 
+UART.
+- send Jennic created socket on Arduino
+- send Jennic removed socket on Arduino
+
+EthernetClient
+calls: (sending always their socket Number as first payload byte)
+- send Jennic Connect Command to port@host
+- send Jennic Connect Command to port@ip
+- send Jennic write Command (single uint8_t or array)
+- ask Jennic how much the bytes the Jennic has recieved.	 
+- ask Jennic for incomming Data (single uint8_t or array) 
+- ask Jennic for peeking one byte
+- ask Jennic if someone is connected 
+  
+EthernetServer
+calls: (sending always their socket Number as first payload byte) 
+- start Jennic listening on a port
+- ask Jennic for (new) open connections on Server port (-> and then add Sockets via SerialMux for them)
+- send Jennic bytes to transmit them to all connected Clients

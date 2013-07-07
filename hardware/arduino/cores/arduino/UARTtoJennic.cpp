@@ -17,32 +17,28 @@
 */
 
 #include "Platform.h"
-#include "SerialCDC.h"
+#include "UARTtoJennic.h"
 #include "ringbuf.c"
 #include <avr/wdt.h>
 
-//extern struct ringbuf serialRx_Buffer;
-//extern struct USB_ClassInfo_CDC_Device_t VirtualSerial_CDC0_Interface;
 
-//int _serialPeek = -1;
+void UARTtoJennic::begin(uint16_t baud_count)
+{
+	// standard is 1 Megabaud
+}
 
-
-void SerialCDC::begin(uint16_t baud_count)
+void UARTtoJennic::end(void)
 {
 }
 
-void SerialCDC::end(void)
+int UARTtoJennic::available(void)
 {
+	return ringbuf_elements(&USARTtoUSB_Buffer);
 }
 
-int SerialCDC::available(void)
+int UARTtoJennic::peek(void)
 {
-	return ringbuf_elements(&serialRx_Buffer);
-}
-
-int SerialCDC::peek(void)
-{
-	ringbuf *r = &serialRx_Buffer;
+	ringbuf *r = &USARTtoUSB_Buffer;
 	if(((r->put_ptr - r->get_ptr) & r->mask) > 0) {
     		unsigned char c = r->data[r->get_ptr];
 		return c;
@@ -51,11 +47,11 @@ int SerialCDC::peek(void)
 	}
 }
 
-int SerialCDC::read(void)
+int UARTtoJennic::read(void)
 {
-	if(ringbuf_elements(&serialRx_Buffer) > 0)
+	if(ringbuf_elements(&USARTtoUSB_Buffer) > 0)
 	{
-		unsigned char c =  ringbuf_get(&serialRx_Buffer);
+		unsigned char c =  ringbuf_get(&USARTtoUSB_Buffer);
 		return c;
 	}
 	else{
@@ -63,24 +59,25 @@ int SerialCDC::read(void)
 	}
 }
 
-void SerialCDC::flush(void)
+
+void UARTtoJennic::flush(void)
 {
 	// according to the Arduino Docs it just waits to
 	// complete the outgoing transmissions.
-	// CDC_Device_Flush(&VirtualSerial_CDC0_Interface);
-	CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
-	USB_USBTask();
+	while(1){
+		if (!ringbuf_elements(&USBtoUSART_Buffer)){
+			delay(5);
+			return;
+		}
+	}
+	return;
 }
 
-size_t SerialCDC::write(u8 c)
+size_t UARTtoJennic::write(u8 c)
 {
-	if(ENDPOINT_READYWAIT_NoError == CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, c)){
-		CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
-		USB_USBTask();
-		return 1;
-	}
-	else return -1;
+	return ringbuf_put(&USBtoUSART_Buffer, c);
 }
+
 
 // This operator is a convenient way for a sketch to check whether the
 // port has actually been configured and opened by the host (as opposed
@@ -89,13 +86,12 @@ size_t SerialCDC::write(u8 c)
 // actually ready to receive and display the data.
 // We add a short delay before returning to fix a bug observed by Federico
 // where the port is configured (lineState != 0) but not quite opened.
-SerialCDC::operator bool() {
-	if((VirtualSerial_CDC0_Interface.State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR) == true) return true;
-	else return false;
-	//bool result = false;
-	// TODO check if CDC Connection is opened on the host side.
-	//return result;
+UARTtoJennic::operator bool() {
+	// therefore no user configuration is allowed 
+	// the configuration is always done.
+	return true;
 }
 
-SerialCDC Serial;
+
+UARTtoJennic Jennic;
 

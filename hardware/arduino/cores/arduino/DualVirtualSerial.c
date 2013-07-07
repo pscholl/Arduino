@@ -57,7 +57,7 @@
 #define PWR_SENSORS _BV(6) /* PC6, on by default, toggle for reset */
 
 static uint8_t usbtouart[128], uarttousb[128], serialRx[128]; // need size of power two!
-static struct ringbuf USARTtoUSB_Buffer, USBtoUSART_Buffer;
+struct ringbuf USARTtoUSB_Buffer, USBtoUSART_Buffer;
 struct ringbuf serialRx_Buffer;
 /** used to toggle the reset lines of the Jennic module, entering programming
  * mode and resetting */
@@ -151,11 +151,6 @@ void lufaInit(void)
 
   ringbuf_init(&serialRx_Buffer, serialRx, sizeof(serialRx));
   
-  //sei();
-  //GlobalInterruptEnable();
-  //clock_prescale_set(clock_div_1);
-
-
   /* restart jennic and set to normal mode. XXX needs serial line ops */
   Serial_Config(1000000, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
   Jennic_Set_Mode(false);
@@ -163,21 +158,10 @@ void lufaInit(void)
 }
 void lufaLoop(void)
 {
-	CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
-	CDC_Arduino_In_Task();
-
-  // Debug
-  if(false){
-  	char buf[64];	
-  	snprintf(buf,sizeof(buf),"CDC2_Event: %d\n",cdc2_event);
-  	CDC_Device_SendString(&VirtualSerial_CDC0_Interface, buf);
-	///CDC_Device_SendString(&VirtualSerial_CDC0_Interface, "cdc2 event\n");
-	delay(100);
-	CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
-	USB_USBTask();
-	delay(900);
+	if(!jennic_in_programming_mode){
+		CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
+		CDC_Arduino_In_Task();
 	}
-
     do{
   	  if (jennic_reset_event)
   	  {
@@ -203,7 +187,6 @@ void lufaLoop(void)
   	  CDC_In_Task();
   	  CDC_Device_USBTask(&VirtualSerial_CDC1_Interface);
 	  
-	  delay(5);
   	  USB_USBTask();
   	  /* do house-keeping */
   	  
@@ -224,6 +207,9 @@ void SetupHardware(void)
   /* enable clock division, run on 16MHz */
   clock_prescale_set(clock_div_1);
 
+  /* enable Interrupts */
+  GlobalInterruptEnable();
+
   /* disable JTAG since we use the pins for I/O, e.g. the STBY pin */
   JTAG_DISABLE();
 
@@ -237,9 +223,6 @@ void SetupHardware(void)
 
   /* enable pushbutton */
   DDRB |= ~(PWR_BUTTON);
-
-  /* enable Interrupts */
-  //GlobalInterruptEnable();
   
   /* set default uart configuration */
   Serial_Config(1000000, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
@@ -431,20 +414,17 @@ void Jennic_Set_Mode(bool programming)
   PORTC &= ~(JEN_RESETN);
    DDRC |= JEN_RESETN;
    DDRB |= JEN_SPIMISO;
-  //_delay_ms(5);
   delay(5);
 
   if (programming)
   {
     DDRC &= ~JEN_RESETN;
-    //_delay_ms(10);
     delay(10);
     DDRB &= ~JEN_SPIMISO;
   }
   else
   {
     DDRB &= ~JEN_SPIMISO;
-    //_delay_ms(10);
     delay(10);
     DDRC &= ~JEN_RESETN;
   }
@@ -455,17 +435,17 @@ void Jennic_Set_Mode(bool programming)
 void CDC_Arduino_In_Task()
 {
 uint16_t bytes = CDC_Device_BytesReceived(&VirtualSerial_CDC0_Interface);
-while(bytes--){
-/* Read bytes from the USB OUT endpoint and store it for the Arduino Serial Class */
- if ( ringbuf_elements(&serialRx_Buffer) < ringbuf_size(&serialRx_Buffer)-2 ) {
-   int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC0_Interface);
-   if ( !(ReceivedByte < 0) )
-     ringbuf_put(&serialRx_Buffer, ReceivedByte);
- }
- else{
- return;
- }
- } // end while
+	while(bytes--){
+	/* Read bytes from the USB OUT endpoint and store it for the Arduino Serial Class */
+ 		if ( ringbuf_elements(&serialRx_Buffer) < ringbuf_size(&serialRx_Buffer)-2 ) {
+   			int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC0_Interface);
+   			if ( !(ReceivedByte < 0) )
+     				ringbuf_put(&serialRx_Buffer, ReceivedByte);
+ 		}
+ 		else{
+ 			return;
+ 		}
+ 	} // end while
 }
 
 void CDC_In_Task()
@@ -479,7 +459,7 @@ void CDC_In_Task()
 }
 
 void Jennic_In_Task()
-{ // XXX better buffering for CDC packets
+{
   size_t i;
 
   Endpoint_SelectEndpoint(VirtualSerial_CDC1_Interface.Config.DataINEndpoint.Address);
