@@ -3,34 +3,55 @@ RPC - Format
 
 1 byte = opCode
 1 byte = payload-length
-~ 23 Serial Line RPCs (without UDP)
+~ 21 Serial Line RPCs (without UDP)
 
-Ethernet
-calls: 
-- set MAC Address
-- set IP Address
-- set DNS Server Address
-- set Subnet Mask
-- set Gateway IP
-- ask Jennic for an IP Address via DHCP
-- ask Jennic to renew DHCP Lease
-- ask Jennic for IP Address
-- ask Jennic for DNS Server
-- ask Jennic for Subnet Mask
-- ask Jennic for Gateway IP
+Jennic returns calling opcode as first byte. Possibly followed by some further payload Data.
 
-EthernetClient
-calls: (sending always their socket Number as first payload byte)
-- send Jennic Connect Command to port@host
-- send Jennic Connect Command to port@ip
-- send Jennic write Command (single uint8_t or array)
-- ask Jennic how much the bytes the Jennic has recieved.	 
-- ask Jennic for incomming Data (single uint8_t or array) 
-- ask Jennic for peeking one byte
-- ask Jennic f Connection is open (if there are bytes to read and the TCP Connection is closed the connection is considered as open)
+OPCODE) DESCRIPTION
+	PAYLOAD 1
+	PAYLOAD 2
+	...
+
+
+Ethernet calls: 
+1)  set MAC Address 
+	8 byte MAC Address
+2)  set IP Address 
+	16 byte IPv6 Address
+3)  set DNS Server Address
+	16 byte IPv6 Address
+4)  set Subnet Mask 
+	16 byte Subnetmask
+5)  set Gateway IP 
+	16 byte GW Ip
+6)  ask  turn DHCP on an return if JENNIC got an IP 
+	0 byte
+7)  ask Jennic to renew DHCP Lease
+	0 byte
+8)  ask Jennic for IP Address
+	0 byte
+9)  ask Jennic for DNS Server
+	0 byte
+10) ask Jennic for Subnet Mask
+	0 byte
+11) ask Jennic for Gateway IP
+
+EthernetClient calls:
+12) send Jennic Connect Command to port@host
+13) send Jennic Connect Command to port@ip 
+	16byte IP
+	2 byte port
+	won't return if connect was successfull
+14) send Jennic write Command (single uint8_t or array)
+	16byte target ip
+	2 byte target port
+	x byte data
+15) ask Jennic how much the bytes the Jennic has recieved.	 
+16) ask Jennic for incomming Data (single uint8_t or array) 
+17) ask Jennic for peeking one byte
+18) ask Jennic f Connection is open (if there are bytes to read and the TCP Connection is closed the connection is considered as open)
   
-EthernetServer
-calls: (sending always their port Number as first payload byte) 
-- start Jennic listening on a port
-- ask Jennic for (new) open connections on Server port (-> and then add Sockets via SerialMux for them)
-- send Jennic bytes to transmit them to all connected Clients
+EthernetServer calls: 
+19) start Jennic listening on a port
+20) ask Jennic for (new) open connections on Server port (-> and then add Sockets via SerialMux for them)
+21) send Jennic bytes to transmit them to all connected Clients
