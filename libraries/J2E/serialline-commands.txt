@@ -8,50 +8,229 @@ RPC - Format
 Jennic returns calling opcode as first byte. Possibly followed by some further payload Data.
 
 OPCODE) DESCRIPTION
-	PAYLOAD 1
-	PAYLOAD 2
-	...
+	Send:
+		VALUE 1
+		VALUE 2
+		...
+	Return:
+		VALUE 1
+		VALUE 2
+		...
+ 
+#------------------------------------------------------------#
+ #define OPCODE_SET_MAC 1
+ #define OPCODE_SET_IP (OPCODE_SET_MAC+1)
+ #define OPCODE_SET_DNS 3
+ #define OPCODE_SET_SUBNET 4
+ #define OPCODE_SET_GATEWAY 5
+ #define OPCODE_SET_DHCP_ON 6
+ #define OPCODE_RENEW_DHCP_LEASE 7
+ #define OPCODE_GET_IP 8
+ #define OPCODE_GET_DNS 9
+ #define OPCODE_GET_SUBNET 10
+ #define OPCODE_GET_GATEWAY 11
+ 
+ #define OPCODE_CONNECT_TO_HOST 12
+ #define OPCODE_CONNECT_TO_IP 13
+ #define OPCODE_TCP_WRITE 14
+ #define OPCODE_TCP_AVAILABLE 15
+ #define OPCODE_TCP_READ 16
+ #define OPCODE_TCP_PEEK 17
+ #define OPCODE_TCP_ALIVE 18
+ 
+ #define OPCODE_TCP_SERVER_START 19
+ #define OPCODE_GET_TCP_SERVER_CONNECTIONS 20
+ #define OPCODE_TCP_SERVER_WRITE 21
+#------------------------------------------------------------#
 
 
-Ethernet calls: 
-1)  set MAC Address 
-	8 byte MAC Address
+** Ethernet calls: 
+
+1)  set MAC Address
+	Send:
+		1 byte Opcode 1
+		1 byte Payload length (=8)
+		8 byte MAC Address
+	Return:
+		1 byte Opcode 1
+		1 byte Payload length (0)
 2)  set IP Address 
-	16 byte IPv6 Address
+	Send:
+		1 byte Opcode 2
+		1 byte Payload length (=8)
+		16 byte IPv6 Address
+	Return:
+		1 byte Opcode 2
+		1 byte Payload length (0)
 3)  set DNS Server Address
-	16 byte IPv6 Address
+	Param:
+		1 byte Opcode 3
+		1 byte Payload length (=8)
+		16 byte IPv6 Address
+	Return:
+		1 byte Opcode 3
+		1 byte Payload length (0)
 4)  set Subnet Mask 
-	16 byte Subnetmask
+	Send:
+		1 byte Opcode 4
+		1 byte Payload length (=8)
+		16 byte Subnetmask
+	Return:
+		1 byte Opcode 4
+		1 byte Payload length (0)
 5)  set Gateway IP 
-	16 byte GW Ip
+	Send:
+		1 byte Opcode 5
+		1 byte Payload length (=8)
+		16 byte GW Ip
+	Return:
+		1 byte Opcode 5
+		1 byte Payload length (0)
 6)  ask  turn DHCP on an return if JENNIC got an IP 
-	0 byte
+	Send:
+		1 byte Opcode 6
+		1 byte Payload length (=0)
+	Return: 
+		1 byte Opcode 6
+		1 byte Payload length (0)
 7)  ask Jennic to renew DHCP Lease
-	0 byte
+	Send:
+		1 byte Opcode 7
+		1 byte Payload length (=0)
+	Return:
+		1 byte Opcode 7
+		1 byte Payload length (0)
 8)  ask Jennic for IP Address
-	0 byte
+	Send:
+		1 byte Opcode 8
+		1 byte Payload length (0)
+	Return:
+		1 byte Opcode 8
+		1 byte Payload length (16)
+		16 byte IP Address
 9)  ask Jennic for DNS Server
-	0 byte
+	Send:
+		1 byte Opcode 9
+		1 byte Payload length (0)
+	Return:
+		1 byte Opcode 9
+		1 byte Payload length (16)
+		16 byte DNS Server IP
 10) ask Jennic for Subnet Mask
-	0 byte
+	Send:
+		1 byte Opcode 10
+		1 byte payload length (=0)
+	Return:
+		1 byte Opcode 10
+		1 byte Payload length (16)
+		16 byte Subnet Mask
 11) ask Jennic for Gateway IP
+	Send:
+		1 byte Opcode 11
+		1 byte payload length (=0)
+	Return:
+		1 byte Opcode 11
+		1 byte Payload length (16)
+		16 byte Subnet Mask
 
-EthernetClient calls:
+
+** EthernetClient calls:
+
 12) send Jennic Connect Command to port@host
+	Send:
+		1 byte Opcode
+		1 byte payload Length (2+x)
+		2 byte Port
+		x bytes host
+	Return: 
+		1 byte Opcode
+		1 byte payload length (1)
+		1 byte OK/notOK
 13) send Jennic Connect Command to port@ip 
-	16byte IP
-	2 byte port
-	won't return if connect was successfull
+	Send:
+		1 byte Opcode
+		1 byte payload Length (18)
+		16 byte IP
+		2 byte Port
+	Return: 
+		1 byte Opcode
+		1 byte payload length (1)
+		1 byte OK/notOK
 14) send Jennic write Command (single uint8_t or array)
-	16byte target ip
-	2 byte target port
-	x byte data
+	Send: 
+		1 byte Opcode
+		1 byte payload length (18 + x)
+		16byte target ip
+		2 byte target port 
+		x byte data
+	Return:
+		1 byte Opcode 
+		1 byte payload length (0)
 15) ask Jennic how much the bytes the Jennic has recieved.	 
+	Send:
+		1 byte Opcode
+		1 byte Payload length (18)
+		16byte target ip
+		2 byte target port 
+	Return:
+		1 byte Opcode 
+		1 byte payload length (1)
+		1 byte amount of recieved bytes
 16) ask Jennic for incomming Data (single uint8_t or array) 
-17) ask Jennic for peeking one byte
+	Send:
+		1 byte Opcode
+		1 byte Payload length (18)
+		16 bytes target ip
+		2 bytes target port 
+	Return:
+		1 byte Opcode 
+		1 byte payload length (x)
+		x bytes amount of recieved bytes
+17) ask Jennic for peeking one byte  
+	Send:
+		1 byte Opcode
+		1 byte Payload length (18)
+		16 bytes target ip
+		2 bytes target port 
+	Return:
+		1 byte Opcode 
+		1 byte payload length (1 / 0)
+		(1 first byte recieved)
 18) ask Jennic f Connection is open (if there are bytes to read and the TCP Connection is closed the connection is considered as open)
-  
-EthernetServer calls: 
+	Send:
+		1 byte Opcode
+		1 byte Payload length (18)
+		16 bytes target ip
+		2 bytes target port 
+	Return:
+		1 byte Opcode 
+		1 byte payload length (1)
+		1 byte if Connection is open
+
+
+** EthernetServer calls: 
+
 19) start Jennic listening on a port
+	Send:
+		1 byte Opcode
+		1 byte Payload length (2)
+		2 bytes port to listen
+	Return:
+		1 byte Opcode 
+		1 byte payload length (0)
 20) ask Jennic for (new) open connections on Server port (-> and then add Sockets via SerialMux for them)
+	Send:
+		1 byte Opcode
+		1 byte payload length
+		2 bytes port
+	Return:
+		1 byte Opcode
+		1 byte payload length
+		16 bytes IP
+		2 bytes Port
 21) send Jennic bytes to transmit them to all connected Clients
+	Send:
+		1 byte Opcode
+		1 byte payload length
+		2 bytes port
+		x bytes data
