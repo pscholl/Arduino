@@ -1,11 +1,11 @@
-#ifndef ethernetclient_h
-#define ethernetclient_h
+#ifndef jennic_ethernetclient_h
+#define jennic_ethernetclient_h
 #include "Arduino.h"	
 #include "Print.h"
 #include "Client.h"
 #include "IPAddress.h"
+#include "IPv6Address.h"
 
-#include "SerialMux.h"
 
 class EthernetClient : public Client {
 

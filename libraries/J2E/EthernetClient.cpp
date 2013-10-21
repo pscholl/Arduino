@@ -9,10 +9,13 @@ extern "C" {
 #include "EthernetClient.h"
 #include "EthernetServer.h"
 
-#include "SerialMux.h"
+
+
+uint16_t EthernetClient::_destPort;
+
+IPv6Address EthernetClient::_destIp;
 
 EthernetClient::EthernetClient(){
-	_sock = mux.newSock();
 }
 
 EthernetClient::EthernetClient(uint8_t sock) {
@@ -20,83 +23,108 @@ EthernetClient::EthernetClient(uint8_t sock) {
 	// in case the Server has to return an EthernetClient Object and no one
 	// has connected.
 	
-	_sock = sock;
 }
-
+// Destructor
 EthernetClient::~EthernetClient() {
-	mux.rmSock(_sock);
 }
 
 int EthernetClient::connect(const char* host, uint16_t port) {
-	if(_sock == -1)
-		return -1;
   
-  // TODO: send Jennic Connect Command to port@host
-   
-  // mux.write(socket, opcode, payload, size)
-  
-  return -1;
+  	Jennic.write(0x0C);
+  	uint8_t i;
+  	for (i = 0;host[i]; i++)
+         ;
+  	Jennic.write(i+2);
+
+  	Jennic.write((uint8_t) port >> 8);
+  	Jennic.write((uint8_t) port);
+	
+  	for (i = 0;host[i]; i++)
+  		Jennic.write(host[i];
+
+
+	while(Jennic.available() < 17)
+		;
+	
+	// OPcode and length is ok?
+	if(Jennic.read() == 0x0C && Jennic.read() == 0x11){
+		
+		while(Jennic.available() > 0){
+			// TODO: write ipAddress in a local variable
+			
+		}
+
+		if(Jennic.read() == 0x01)
+			return true;
+	}
+	return false;
 }
 
-int EthernetClient::connect(IPAddress ip, uint16_t port) {
-	if(_sock == -1)
-		return -1;
-   // TODO: send Jennic Connect Command to port@ip
-  return -1;
+int EthernetClient::connect(IPv6Address ip, uint16_t port) {
+  	Jennic.write(0x13);
+  	Jennic.write(0x18);
+
+	// TODO: Implement IPv6Address and send the IP
+
+  	Jennic.write((uint8_t) port >> 8);
+  	Jennic.write((uint8_t) port);
+	
+	while(Jennic.available() < 3)
+		;
+	
+	if(Jennic.read() == 0x16 && Jennic.read() == 0x01 && Jennic.read() == 0x01)
+		return true;
+	return false;
 }
 
 size_t EthernetClient::write(uint8_t b) {
-	if(_sock == -1)
-		return -1;
-		
-  // TODO: send Jennic write Command.
-  // We assume sending Data never fails. Because Jennic might
-  // Buffer this write with the next write Call.
-   
-  // mux.write(socket, opcode, payload, size)	// send Data
-  return -1;
+	Jennic.write(0x14);
+	Jennic.write(0x13); // = dec 19
+	
+	// TODO write IP Address
+	
+  	Jennic.write((uint8_t) port >> 8);
+  	Jennic.write((uint8_t) port);
+	
+	Jennic.write(b);
 }
 
 size_t EthernetClient::write(const uint8_t *buf, size_t size) {
-	if(_sock == -1)
-		return -1;
 		
-  // mux.write(socket, opcode, payload, size)	// send Data
-  
+	Jennic.write(0x14);
+	Jennic.write();
+	
+	uint8_t s = (uint8_t) size;
+	s += 18;
+	Jennic.write(s);
+
+	// TODO write IP Address
+	
+  	Jennic.write((uint8_t) port >> 8);
+  	Jennic.write((uint8_t) port);
+	
+	for(uint8_t i = 0; i < (uint8_t) size; i++)
+		Jennic.write(buf[i]);
+  	
+	return size;
 }
 int EthernetClient::available() {
-  if(_sock == -1)
-	return -1;
-
 	// TODO: ask Jennic how much the Jennic has recieved.	  
-  return -1;
 }
 
 int EthernetClient::read() {
-	if(_sock == -1)
-		return -1;
-	
 	// TODO: ask Jennic for incomming Data
-	// mux.read(socket, *payload, size)	// get Data
-  
-	return -1;
 }
 int EthernetClient::read(uint8_t *buf, size_t size) {
-	if(_sock == -1)
-		return -1;
-	// TODO: ask Jennic for incomming Data
-  return -1;
 }
 
 int EthernetClient::peek() {
-	if(_sock == -1)
-		return -1;
   uint8_t b;
   // Unlike recv, peek doesn't check to see if there's any data available, so we must
   if (!available())
     return -1;
   
-  // ask Jennic for peeking one byte -> set b to result
+  // TODO: ask Jennic for peeking one byte -> set b to result
   
   return b;
 }
@@ -111,8 +139,6 @@ void EthernetClient::stop() {
 }
 
 uint8_t EthernetClient::connected() {
-	if(_sock == -1)
-		return -1;
 	// TODO: return if Jennic has still a Connection 
 	// OR there ist still something to read (peek for it).
   return -1;

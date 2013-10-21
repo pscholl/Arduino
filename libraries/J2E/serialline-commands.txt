@@ -18,29 +18,29 @@ OPCODE) DESCRIPTION
 		...
  
 #------------------------------------------------------------#
- #define OPCODE_SET_MAC 1
- #define OPCODE_SET_IP (OPCODE_SET_MAC+1)
- #define OPCODE_SET_DNS 3
- #define OPCODE_SET_SUBNET 4
- #define OPCODE_SET_GATEWAY 5
- #define OPCODE_SET_DHCP_ON 6
- #define OPCODE_RENEW_DHCP_LEASE 7
- #define OPCODE_GET_IP 8
- #define OPCODE_GET_DNS 9
- #define OPCODE_GET_SUBNET 10
- #define OPCODE_GET_GATEWAY 11
+- #define OPCODE_SET_MAC 1 
+- #define OPCODE_SET_IP (OPCODE_SET_MAC+1)
+- #define OPCODE_SET_DNS 3
+- #define OPCODE_SET_SUBNET 4
+- #define OPCODE_SET_GATEWAY 5
+- #define OPCODE_SET_DHCP_ON 6
+- #define OPCODE_RENEW_DHCP_LEASE 7
+- #define OPCODE_GET_IP 8
+- #define OPCODE_GET_DNS 9
+- #define OPCODE_GET_SUBNET 10
+- #define OPCODE_GET_GATEWAY 11
  
- #define OPCODE_CONNECT_TO_HOST 12
- #define OPCODE_CONNECT_TO_IP 13
- #define OPCODE_TCP_WRITE 14
- #define OPCODE_TCP_AVAILABLE 15
- #define OPCODE_TCP_READ 16
- #define OPCODE_TCP_PEEK 17
- #define OPCODE_TCP_ALIVE 18
+- #define OPCODE_CONNECT_TO_HOST 12
++ #define OPCODE_CONNECT_TO_IP 13
++ #define OPCODE_TCP_WRITE 14
++ #define OPCODE_TCP_AVAILABLE 15
++ #define OPCODE_TCP_READ 16
++ #define OPCODE_TCP_PEEK 17
++ #define OPCODE_TCP_ALIVE 18
  
- #define OPCODE_TCP_SERVER_START 19
- #define OPCODE_GET_TCP_SERVER_CONNECTIONS 20
- #define OPCODE_TCP_SERVER_WRITE 21
++ #define OPCODE_TCP_SERVER_START 19
++ #define OPCODE_GET_TCP_SERVER_CONNECTIONS 20
++ #define OPCODE_TCP_SERVER_WRITE 21
 #------------------------------------------------------------#
 
 
@@ -144,7 +144,8 @@ OPCODE) DESCRIPTION
 		x bytes host
 	Return: 
 		1 byte Opcode
-		1 byte payload length (1)
+		1 byte payload length (17)
+		16 byte IP
 		1 byte OK/notOK
 13) send Jennic Connect Command to port@ip 
 	Send:
@@ -155,14 +156,14 @@ OPCODE) DESCRIPTION
 	Return: 
 		1 byte Opcode
 		1 byte payload length (1)
-		1 byte OK/notOK
+		1 byte OK/notOK (success == 0x01, failure == 0x00)
 14) send Jennic write Command (single uint8_t or array)
 	Send: 
 		1 byte Opcode
 		1 byte payload length (18 + x)
-		16byte target ip
+		16 byte target ip
 		2 byte target port 
-		x byte data
+		x byte data (max Jennic tcp_TX-Buffer Size)
 	Return:
 		1 byte Opcode 
 		1 byte payload length (0)
@@ -196,7 +197,7 @@ OPCODE) DESCRIPTION
 		1 byte Opcode 
 		1 byte payload length (1 / 0)
 		(1 first byte recieved)
-18) ask Jennic f Connection is open (if there are bytes to read and the TCP Connection is closed the connection is considered as open)
+18) ask Jennic if Connection is open (if there are bytes to read and the TCP Connection is closed the connection is considered as open [just now if the connection is shutdown the beyte to read are dropped])
 	Send:
 		1 byte Opcode
 		1 byte Payload length (18)
@@ -234,3 +235,6 @@ OPCODE) DESCRIPTION
 		1 byte payload length
 		2 bytes port
 		x bytes data
+	Return:
+		1 byte Opcode
+		1 byte payload length
