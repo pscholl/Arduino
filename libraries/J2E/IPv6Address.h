@@ -37,7 +37,7 @@ private:
     // to the internal structure rather than a copy of the address this function should only
     // be used when you know that the usage of the returned uint8_t* will be transient and not
     // stored.
-    uint8_t* raw_address() { return _address; };
+    uint16_t* raw_address() { return _address; };
 
 public:
     // Constructors

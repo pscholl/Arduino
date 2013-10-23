@@ -41,6 +41,8 @@ OPCODE) DESCRIPTION
 + #define OPCODE_TCP_SERVER_START 19
 + #define OPCODE_GET_TCP_SERVER_CONNECTIONS 20
 + #define OPCODE_TCP_SERVER_WRITE 21
+
++ #define OPCODE_CALLBACK 42
 #------------------------------------------------------------#
 
 
@@ -57,7 +59,7 @@ OPCODE) DESCRIPTION
 2)  set IP Address 
 	Send:
 		1 byte Opcode 2
-		1 byte Payload length (=8)
+		1 byte Payload length (=16)
 		16 byte IPv6 Address
 	Return:
 		1 byte Opcode 2
@@ -65,7 +67,7 @@ OPCODE) DESCRIPTION
 3)  set DNS Server Address
 	Param:
 		1 byte Opcode 3
-		1 byte Payload length (=8)
+		1 byte Payload length (=16)
 		16 byte IPv6 Address
 	Return:
 		1 byte Opcode 3
@@ -73,15 +75,15 @@ OPCODE) DESCRIPTION
 4)  set Subnet Mask 
 	Send:
 		1 byte Opcode 4
-		1 byte Payload length (=8)
-		16 byte Subnetmask
+		1 byte Payload length (=1)
+		1 byte Subnetmask
 	Return:
 		1 byte Opcode 4
 		1 byte Payload length (0)
 5)  set Gateway IP 
 	Send:
 		1 byte Opcode 5
-		1 byte Payload length (=8)
+		1 byte Payload length (=16)
 		16 byte GW Ip
 	Return:
 		1 byte Opcode 5
@@ -92,14 +94,16 @@ OPCODE) DESCRIPTION
 		1 byte Payload length (=0)
 	Return: 
 		1 byte Opcode 6
-		1 byte Payload length (0)
+		1 byte Payload length (1)
+		1 byte success (0x01 = successfull / 0x00 == not successfull)
 7)  ask Jennic to renew DHCP Lease
 	Send:
 		1 byte Opcode 7
 		1 byte Payload length (=0)
 	Return:
 		1 byte Opcode 7
-		1 byte Payload length (0)
+		1 byte Payload length (1)
+		1 byte success (0x01 = successfull / 0x00 == not successfull)
 8)  ask Jennic for IP Address
 	Send:
 		1 byte Opcode 8
@@ -183,6 +187,7 @@ OPCODE) DESCRIPTION
 		1 byte Payload length (18)
 		16 bytes target ip
 		2 bytes target port 
+		1 byte amount of data to read // TODO
 	Return:
 		1 byte Opcode 
 		1 byte payload length (x)

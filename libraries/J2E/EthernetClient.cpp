@@ -12,46 +12,59 @@ extern "C" {
 
 
 uint16_t EthernetClient::_destPort;
+uint16_t EthernetClient::_localPort;
 
 IPv6Address EthernetClient::_destIp;
 
 EthernetClient::EthernetClient(){
+	_localPort = 0;
 }
 
-EthernetClient::EthernetClient(uint8_t sock) {
+EthernetClient::EthernetClient(uint16_t localPort) {
 	// TODO: make sure there is an option to create a "dead" EthernetClient 
 	// in case the Server has to return an EthernetClient Object and no one
 	// has connected.
-	
+	//
+	// this Constructor ist used if the EthernetServer 
+	// returns an EthernetClient Object.
+	_localPort = localPort;
 }
 // Destructor
 EthernetClient::~EthernetClient() {
+	// TODO: abort Connection
 }
 
 int EthernetClient::connect(const char* host, uint16_t port) {
-  
+  	_destPort = port;
+	
+	// send opcode
   	Jennic.write(0x0C);
-  	uint8_t i;
-  	for (i = 0;host[i]; i++)
+	
+	// send payload length
+  	for (uint8_t i = 0;host[i]; i++)
          ;
   	Jennic.write(i+2);
 
+	// send port
   	Jennic.write((uint8_t) port >> 8);
   	Jennic.write((uint8_t) port);
 	
+	// send host
   	for (i = 0;host[i]; i++)
   		Jennic.write(host[i];
 
-
+	// wait for response
 	while(Jennic.available() < 17)
 		;
 	
-	// OPcode and length is ok?
+	// OPcode and payload length is ok?
 	if(Jennic.read() == 0x0C && Jennic.read() == 0x11){
 		
-		while(Jennic.available() > 0){
-			// TODO: write ipAddress in a local variable
-			
+		// write ipAddress in a local variable
+		for(uint8_t i = 0; i < 8)
+			_destIp[i] == Jennic.read();
+			_destIp[i] << 8;
+			_destIp[i] == Jennic.read();
 		}
 
 		if(Jennic.read() == 0x01)
@@ -61,14 +74,25 @@ int EthernetClient::connect(const char* host, uint16_t port) {
 }
 
 int EthernetClient::connect(IPv6Address ip, uint16_t port) {
-  	Jennic.write(0x13);
-  	Jennic.write(0x18);
+	// Send Jennic Connect command
+  	Jennic.write(0x0D);
+  	Jennic.write(0x12);
 
-	// TODO: Implement IPv6Address and send the IP
+	_destIp = ip;
+	_destPort = port;
 
+	// send ip address
+	for(uint8_t i = 0; i < 8){
+		uint8_t tmp = ip[i] >> 8;
+		Jennic.write(tmp);
+		Jennic.write((uint8_t) ip[i]);
+	}
+
+	// send port
   	Jennic.write((uint8_t) port >> 8);
   	Jennic.write((uint8_t) port);
 	
+	// wait for response
 	while(Jennic.available() < 3)
 		;
 	
@@ -78,44 +102,113 @@ int EthernetClient::connect(IPv6Address ip, uint16_t port) {
 }
 
 size_t EthernetClient::write(uint8_t b) {
-	Jennic.write(0x14);
+	// send opcode and payload length
+	Jennic.write(0x0E); // = dec 14
 	Jennic.write(0x13); // = dec 19
 	
-	// TODO write IP Address
+	// send ip address
+	for(uint8_t i = 0; i < 8){
+		uint8_t tmp = _destIp[i] >> 8;
+		Jennic.write(tmp);
+		Jennic.write((uint8_t) _destIp[i]);
+	}
 	
+	// send port
   	Jennic.write((uint8_t) port >> 8);
   	Jennic.write((uint8_t) port);
 	
+	// send data
 	Jennic.write(b);
+	
+	// wait for response
+	while(Jennic.available() < 2)
+		;
+	Jennic.read();
+	Jennic.read();
 }
 
 size_t EthernetClient::write(const uint8_t *buf, size_t size) {
-		
-	Jennic.write(0x14);
-	Jennic.write();
-	
+	// send opcode 	
+	Jennic.write(0x0E);
+
+	// send payload length
 	uint8_t s = (uint8_t) size;
 	s += 18;
 	Jennic.write(s);
 
-	// TODO write IP Address
+	// send ip address
+	for(uint8_t i = 0; i < 8){
+		uint8_t tmp = _destIp[i] >> 8;
+		Jennic.write(tmp);
+		Jennic.write((uint8_t) _destIp[i]);
+	}
 	
+	// sned port
   	Jennic.write((uint8_t) port >> 8);
   	Jennic.write((uint8_t) port);
 	
+	// send data
 	for(uint8_t i = 0; i < (uint8_t) size; i++)
 		Jennic.write(buf[i]);
   	
+	// wait for response
+	while(Jennic.available() < 2)
+		;
+	Jennic.read();
+	Jennic.read();
+
 	return size;
 }
 int EthernetClient::available() {
-	// TODO: ask Jennic how much the Jennic has recieved.	  
+	// send opcode 	
+	Jennic.write(0x0F);
+
+	// send payload length
+	Jennic.write(0x12);
+
+	// send ip address
+	for(uint8_t i = 0; i < 8){
+		uint8_t tmp = _destIp[i] >> 8;
+		Jennic.write(tmp);
+		Jennic.write((uint8_t) _destIp[i]);
+	}
+	
+	// sned port
+  	Jennic.write((uint8_t) _destPort >> 8);
+  	Jennic.write((uint8_t) _destPort);
+
+	// wait for response
+	while(Jennic.available() < 3)
+		;
+	Jennic.read();
+	Jennic.read();
+	return Jennic.read();
+
 }
 
 int EthernetClient::read() {
-	// TODO: ask Jennic for incomming Data
+	// send opcode 	
+	Jennic.write(0x10); // = dec 16
+
+	// send payload length
+	Jennic.write(0x12); // = dec 18
+
+	// send ip address
+	for(uint8_t i = 0; i < 8){
+		uint8_t tmp = _destIp[i] >> 8;
+		Jennic.write(tmp);
+		Jennic.write((uint8_t) _destIp[i]);
+	}
+	
+	// send port
+  	Jennic.write((uint8_t) _destPort >> 8);
+  	Jennic.write((uint8_t) _destPort);
+	
+	// TODO
+	// process the returned Data from the Jennic.
 }
 int EthernetClient::read(uint8_t *buf, size_t size) {
+	// TODO
 }
 
 int EthernetClient::peek() {
@@ -135,12 +228,14 @@ void EthernetClient::flush() {
 }
 
 void EthernetClient::stop() {
-  // TOTO: say Jennic to close the Connection
+  // TODO: say Jennic to close the Connection
 }
 
 uint8_t EthernetClient::connected() {
 	// TODO: return if Jennic has still a Connection 
 	// OR there ist still something to read (peek for it).
+	// (atm Connection and Data is dropped by the Jennic if
+	// connection closes)
   return -1;
 }
 
