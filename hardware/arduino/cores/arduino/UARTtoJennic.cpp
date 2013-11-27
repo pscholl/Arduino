@@ -64,6 +64,8 @@ void UARTtoJennic::flush(void)
 {
 	// according to the Arduino Docs it just waits to
 	// complete the outgoing transmissions.
+	//
+	// TODO this is going to hang up!
 	while(1){
 		if (!ringbuf_elements(&USBtoUSART_Buffer)){
 			delay(5);

@@ -1,24 +1,23 @@
-#include "socket.h"
 extern "C" {
 #include "string.h"
 }
 
-#include "Ethernet.h"
-#include "EthernetClient.h"
-#include "EthernetServer.h"
+#include "JennicClass.h"
+#include "JennicClient.h"
+#include "JennicServer.h"
 
-EthernetServer::EthernetServer(uint16_t port)
+JennicServer::JennicServer(uint16_t port)
 {
   _port = port;
 }
 
-void EthernetServer::begin()
+void JennicServer::begin()
 {
   // TODO start listening on Jennic
 }
 
 
-EthernetClient EthernetServer::available()
+JennicClient JennicServer::available()
 {
   // TODO if someone has connected to the Server an written Data return an
   // ClientEthernet Object with one (not always the same!) corresponding 
@@ -26,12 +25,12 @@ EthernetClient EthernetServer::available()
   
 }
 
-size_t EthernetServer::write(uint8_t b) 
+size_t JennicServer::write(uint8_t b) 
 {
   return write(&b, 1);
 }
 
-size_t EthernetServer::write(const uint8_t *buffer, size_t size) 
+size_t JennicServer::write(const uint8_t *buffer, size_t size) 
 {
   // TODO write buffer to all connected clients and return the number
   // of clients to which were written.

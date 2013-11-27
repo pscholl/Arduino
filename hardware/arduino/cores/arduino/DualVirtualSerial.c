@@ -62,10 +62,15 @@ struct ringbuf serialRx_Buffer;
 /** used to toggle the reset lines of the Jennic module, entering programming
  * mode and resetting */
 static volatile bool jennic_reset_event = false;
-static volatile uint8_t cdc2_event = 0;
+// static volatile uint8_t cdc2_event = 0;
 
 /** actual jennic mode */
 static bool jennic_in_programming_mode = false;
+
+/** Pointer to Callback-Function which is called if Jennic recieved something */
+void (*callback)(void);
+void nothing(void);
+void setTcpRecieveCallback(void(*fun)(void));
 
 /** handle incoming Data on the Arduino CDC tty */
 void CDC_Arduino_In_Task(void);
@@ -151,6 +156,8 @@ void lufaInit(void)
 
   ringbuf_init(&serialRx_Buffer, serialRx, sizeof(serialRx));
   
+  callback = nothing;
+
   /* restart jennic and set to normal mode. XXX needs serial line ops */
   Serial_Config(1000000, 8, CDC_LINEENCODING_OneStopBit, CDC_PARITY_None);
   Jennic_Set_Mode(false);
@@ -190,6 +197,8 @@ void lufaLoop(void)
   	  USB_USBTask();
   	  /* do house-keeping */
   	  
+	  // UDRE Interrupt enable (USART)
+	  // cause if our USB->USART ringbuf is full we disable the interrupt.
 	  if ( ringbuf_elements(&USBtoUSART_Buffer) && !(UCSR1B & (1 << UDRIE1)) )
   	    UCSR1B |= (1 << UDRIE1);
   	}while(jennic_in_programming_mode);
@@ -273,16 +282,21 @@ ISR(USART1_UDRE_vect, ISR_BLOCK)
 
 ISR(USART1_RX_vect, ISR_BLOCK)
 {
-  uint8_t ReceivedByte;
+  uint8_t receivedByte;
 
   if (ringbuf_elements(&USARTtoUSB_Buffer) >= ringbuf_size(&USARTtoUSB_Buffer) - 1 )
     return;
 
-  ReceivedByte = UDR1;
+  receivedByte = UDR1;
+  	
+  // TODO check for callback Code
+  // set var if waiting for normal reply.
+  // if not awaiting normal reply and recievedByte == 42 call callback.
 
-  if (USB_DeviceState == DEVICE_STATE_Configured) {
-    ringbuf_put(&USARTtoUSB_Buffer, ReceivedByte);
-  }
+  // TODO remove if condition cause we need the serial in even if theres no USB Connection
+  //if (USB_DeviceState == DEVICE_STATE_Configured) {
+    ringbuf_put(&USARTtoUSB_Buffer, receivedByte);
+  //}
 }
 
 /** Event handler for the CDC Class driver Line Encoding Changed event.
@@ -312,7 +326,7 @@ void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const C
 	if(CDCInterfaceInfo->Config.ControlInterfaceNumber == 2)
         {
 	//CDC_Device_SendString(&VirtualSerial_CDC0_Interface, "ContlEv Int2\n");
-	/* fire a reset jennic event iff there is a high-low-high transition within
+	/* fire a reset jennic event if there is a high-low-high transition within
   	 * SWITCH_TIMEOUT ms on the dtr line */
   		// static clock_time_t previous_change = 0;
   		static bool currentDTRState = false;
@@ -466,16 +480,20 @@ void Jennic_In_Task()
   if ( !Endpoint_IsINReady() )
     return;
 
-  /* Read bytes from the USART receive buffer and create ethernet frame or send with CDC */
-  if (ringbuf_elements(&USARTtoUSB_Buffer))
+  /* Read bytes from the USART receive buffer and send with CDC */
+  /* pass through in programming mode */
+  if (ringbuf_elements(&USARTtoUSB_Buffer) && jennic_in_programming_mode)
   {
     uint8_t byte = ringbuf_get(&USARTtoUSB_Buffer);
 
-    /* pass through in programming mode */
-    if (jennic_in_programming_mode)
-    {
       if (CDC_Device_SendByte(&VirtualSerial_CDC1_Interface, byte) != ENDPOINT_READYWAIT_NoError)
         return;
-    }
   }
+}
+
+void nothing(){
+}
+
+void setTcpRecieveCallback(void(*fun)(void)){
+	callback = fun;
 }

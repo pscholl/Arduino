@@ -38,6 +38,7 @@
  *         Adam Dunkels <adam@sics.se>
  */
 
+
 #include <stdint.h>
 #include <DualVirtualSerial.h>
 //struct ringbuf {
@@ -51,7 +52,7 @@
 
 
 /*---------------------------------------------------------------------------*/
-void
+static void
 ringbuf_init(struct ringbuf *r, uint8_t *dataptr, uint8_t size)
 {
   r->data = dataptr;
@@ -115,4 +116,4 @@ ringbuf_elements(struct ringbuf *r)
 {
   return (r->put_ptr - r->get_ptr) & r->mask;
 }
-/*---------------------------------------------------------------------------*/
+/*a---------------------------------------------------------------------------*/

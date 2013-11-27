@@ -1,6 +1,6 @@
-#include "Ethernet.h"
+#include "JennicClass.h" 
 
-int EthernetClass::begin(uint8_t *mac_address)
+int JennicClass::begin(uint8_t *mac_address)
 {
   	// TODO: Init with DHCP
   	// and set mac Adress
@@ -9,7 +9,7 @@ int EthernetClass::begin(uint8_t *mac_address)
 	Jennic.write(0x01);
 	Jennic.write(0x08);
 	for(uint8_t i = 0; i < 8; i++){
-		Jennic.write(mac[i]);
+		Jennic.write(mac_address[i]);
 	}
 
 	while(Jennic.available() < 2)
@@ -19,7 +19,7 @@ int EthernetClass::begin(uint8_t *mac_address)
   	
 	// turn DHCP on
 	Jennic.write(0x06);
-	Jennic.write(0x00);
+	Jennic.write((uint8_t)0x00);
 	while(Jennic.available() < 3)
 		;
 	Jennic.read();
@@ -28,7 +28,7 @@ int EthernetClass::begin(uint8_t *mac_address)
 	return Jennic.read();
 }
 
-void EthernetClass::begin(uint8_t *mac_address, IPv6Address local_ip)
+void JennicClass::begin(uint8_t *mac_address, IPv6Address local_ip)
 {
   // Assume the DNS server will be the machine on the same network as the local IP
   // but with last grougroup '1'
@@ -37,7 +37,7 @@ void EthernetClass::begin(uint8_t *mac_address, IPv6Address local_ip)
   begin(mac_address, local_ip, dns_server);
 }
 
-void EthernetClass::begin(uint8_t *mac_address, IPAddress local_ip, IPAddress dns_server)
+void JennicClass::begin(uint8_t *mac_address, IPv6Address local_ip, IPv6Address dns_server)
 {
   // Assume the gateway will be the machine on the same network as the local IP
   // but with last group being '1'
@@ -46,12 +46,12 @@ void EthernetClass::begin(uint8_t *mac_address, IPAddress local_ip, IPAddress dn
   begin(mac_address, local_ip, dns_server, gateway);
 }
 
-void EthernetClass::begin(uint8_t *mac_address, IPAddress local_ip, IPAddress dns_server, IPAddress gateway)
+void JennicClass::begin(uint8_t *mac_address, IPv6Address local_ip, IPv6Address dns_server, IPv6Address gateway)
 {
   begin(mac_address, local_ip, dns_server, gateway, 128);
 }
 
-void EthernetClass::begin(uint8_t *mac, IPv6Address local_ip, IPv6Address dns_server, IPv6Address gateway, uint8_t subnet)
+void JennicClass::begin(uint8_t *mac, IPv6Address local_ip, IPv6Address dns_server, IPv6Address gateway, uint8_t subnet)
 {
 	// TODO: Build an IP connection Handler on Jennic
 	
@@ -75,7 +75,7 @@ void EthernetClass::begin(uint8_t *mac, IPv6Address local_ip, IPv6Address dns_se
 		uint16_t block = local_ip[i];
 		uint8_t tmp = (block >> 8);
 		Jennic.write(tmp);
-		tmp = (uint_8) block;
+		tmp = (uint8_t) block;
 		Jennic.write(tmp);
 	}
 	while(Jennic.available() < 2)
@@ -90,7 +90,7 @@ void EthernetClass::begin(uint8_t *mac, IPv6Address local_ip, IPv6Address dns_se
 		uint16_t block = dns_server[i];
 		uint8_t tmp = (block >> 8);
 		Jennic.write(tmp);
-		tmp = (uint_8) block;
+		tmp = (uint8_t) block;
 		Jennic.write(tmp);
 	}
 	while(Jennic.available() < 2)
@@ -105,7 +105,7 @@ void EthernetClass::begin(uint8_t *mac, IPv6Address local_ip, IPv6Address dns_se
 		uint16_t block = gateway[i];
 		uint8_t tmp = (block >> 8);
 		Jennic.write(tmp);
-		tmp = (uint_8) block;
+		tmp = (uint8_t) block;
 		Jennic.write(tmp);
 	}
 	while(Jennic.available() < 2)
@@ -123,10 +123,14 @@ void EthernetClass::begin(uint8_t *mac, IPv6Address local_ip, IPv6Address dns_se
 	Jennic.read();
 }
 
-int EthernetClass::maintain(){
+void JennicClass::setCallback(void(*fun)(void)){
+	setTcpRecieveCallback(fun);
+}
+
+int JennicClass::maintain(){
 	// Renew DHCP lease
 	Jennic.write(0x07);
-	Jennic.write(0x00);
+	Jennic.write((uint8_t)0x00);
 	while(Jennic.available() < 3)
 		;
 	Jennic.read();
@@ -135,28 +139,28 @@ int EthernetClass::maintain(){
 	return Jennic.read();
 }
 
-IPv6Address EthernetClass::localIP()
+IPv6Address JennicClass::localIP()
 {
   // TODO: get Local IP Address from Jennic
-  return null;
+  return NULL;
 }
 
-IPv6Address EthernetClass::subnetMask()
+IPv6Address JennicClass::subnetMask()
 {
   // TODO: get Subnet Address from Jennic
-  return null;
+  return NULL;
 }
 
-IPv6Address EthernetClass::gatewayIP()
+IPv6Address JennicClass::gatewayIP()
 {
   // TODO: get Gateway IP Address from Jennic
-  return null;
+  return NULL;
 }
 
-IPv6Address EthernetClass::dnsServerIP()
+IPv6Address JennicClass::dnsServerIP()
 {
  // TODO: get DNS IP Address from Jennic
-  return null;
+  return NULL;
 }
 
-EthernetClass Ethernet;
+JennicClass Ethernet;

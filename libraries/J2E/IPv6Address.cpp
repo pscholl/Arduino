@@ -21,7 +21,7 @@ IPv6Address::IPv6Address(uint16_t first_group, uint16_t second_group, uint16_t t
 }
 
 
-Ipv6Address::IPv6Address(const uint8_t *address)
+IPv6Address::IPv6Address(const uint16_t *address)
 {
     memcpy(_address, address, sizeof(_address));
 }

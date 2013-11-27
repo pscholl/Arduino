@@ -51,7 +51,7 @@ public:
     //
     // operator uint32_t() { return *((uint32_t*)_address); };
     // bool operator==(const IPAddress& addr) { return (*((uint32_t*)_address)) == (*((uint32_t*)addr._address)); };
-    bool operator == (const IPv6Adrress& addr) {
+    bool operator == (const IPv6Address& addr) {
     	// TODO check code.
     	for(uint8_t i = 0; i < 8; i++){
 		if(_address[i] != addr._address[i]) return false;
@@ -78,7 +78,7 @@ public:
     // friend class DNSClient;
 };
 
-const IPAddress INADDR_NONE(0,0,0,0,0,0,0,0);
+const IPv6Address INADDR_NONE(0,0,0,0,0,0,0,0);
 
 
 #endif

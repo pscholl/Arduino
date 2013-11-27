@@ -184,7 +184,7 @@ OPCODE) DESCRIPTION
 16) ask Jennic for incomming Data (single uint8_t or array) 
 	Send:
 		1 byte Opcode
-		1 byte Payload length (18)
+		1 byte Payload length (19)
 		16 bytes target ip
 		2 bytes target port 
 		1 byte amount of data to read // TODO

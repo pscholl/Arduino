@@ -7,9 +7,9 @@
 #######################################
 
 Ethernet	KEYWORD1
-EthernetClient	KEYWORD1
-EthernetServer	KEYWORD1
-IPAddress	KEYWORD1
+JennicClient	KEYWORD1
+JennicServer	KEYWORD1
+IPv6Address	KEYWORD1
 
 #######################################
 # Methods and Functions (KEYWORD2)
