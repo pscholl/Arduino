@@ -17,19 +17,25 @@ extern "C" {
 //IPv6Address JennicClient::_destIp;
 
 JennicClient::JennicClient(){
-	_localPort = 0;
+	//_localPort = 0;
 	_destPort = 0;
 }
 
-JennicClient::JennicClient(uint16_t localPort) {
+// JennicClient::JennicClient(uint16_t localPort) {
 	// TODO: make sure there is an option to create a "dead" JennicClient 
 	// in case the Server has to return an JennicClient Object and no one
 	// has connected.
 	//
 	// this Constructor ist used if the EthernetServer 
 	// returns an JennicClient Object.
-	_localPort = localPort;
+	// _localPort = localPort;
+// }
+
+JennicClient::JennicClient(uint16_t desPort, IPv6Address destIp){
+	_destPort = desPort;
+	_destIp = destIp;
 }
+
 // Destructor
 JennicClient::~JennicClient() {
 	// TODO: abort Connection
@@ -57,11 +63,13 @@ int JennicClient::connect(const char* host, uint16_t port) {
   		Jennic.write(host[i]);
 
 	// wait for response
-	while(Jennic.available() < 17)
+	while(Jennic.available() < 18)
 		;
 	
 	// OPcode and payload length is ok?
-	if(Jennic.read() == 0x0C && Jennic.read() == 0x11){
+	if(opCode == 0x0C && Jennic.read() == 0x11){
+	
+	
 		
 		// write ipAddress in a local variable
 		for(i = 0; i < 8; i++){
@@ -69,10 +77,12 @@ int JennicClient::connect(const char* host, uint16_t port) {
 			_destIp[i] << 8;
 			_destIp[i] == Jennic.read();
 		}
-
+		
 		if(Jennic.read() == 0x01)
+			opCode = -1;
 			return true;
 	}
+	opCode = -1;
 	return false;
 }
 
@@ -96,38 +106,19 @@ int JennicClient::connect(IPv6Address ip, uint16_t port) {
   	Jennic.write((uint8_t) port);
 	
 	// wait for response
-	while(Jennic.available() < 3)
+	while(Jennic.available() < 2)
 		;
-	
-	if(Jennic.read() == 0x16 && Jennic.read() == 0x01 && Jennic.read() == 0x01)
+	// opcode payloadlength ok/notok
+	if(opCode == 0x16 && Jennic.read() == 0x01 && Jennic.read() == 0x01){
+		opCode = -1;
 		return true;
+	}
+	opCode = -1;
 	return false;
 }
 
 size_t JennicClient::write(uint8_t b) {
-	// send opcode and payload length
-	Jennic.write(0x0E); // = dec 14
-	Jennic.write(0x13); // = dec 19
-	
-	// send ip address
-	for(uint8_t i = 0; i < 8; i++){
-		uint8_t tmp = _destIp[i] >> 8;
-		Jennic.write(tmp);
-		Jennic.write((uint8_t) _destIp[i]);
-	}
-	
-	// send port
-  	Jennic.write((uint8_t) _destPort >> 8);
-  	Jennic.write((uint8_t) _destPort);
-	
-	// send data
-	Jennic.write(b);
-	
-	// wait for response
-	while(Jennic.available() < 2)
-		;
-	Jennic.read();
-	Jennic.read();
+	return write(&b, 1);
 }
 
 size_t JennicClient::write(const uint8_t *buf, size_t size) {
@@ -155,11 +146,14 @@ size_t JennicClient::write(const uint8_t *buf, size_t size) {
 		Jennic.write(buf[i]);
   	
 	// wait for response
-	while(Jennic.available() < 2)
+	while(Jennic.available() < 1)
 		;
-	if(Jennic.read() == 0x0E && Jennic.read() == s)
+	if(opCode == 0x0E && Jennic.read() == s){
+		opCode = -1;
 		return size;
-	
+	}
+
+	opCode = -1;
 	return 0;
 }
 int JennicClient::available() {
@@ -181,17 +175,21 @@ int JennicClient::available() {
   	Jennic.write((uint8_t) _destPort);
 
 	// wait for response
-	while(Jennic.available() < 3)
+	while(Jennic.available() < 2)
 		;
-	if(Jennic.read() == 0x0F && Jennic.read() == 0x01)
+	
+	if(opCode == 0x0F && Jennic.read() == 0x01){
+		opCode = -1;
 		return Jennic.read();
+	}
 
+	opCode = -1;
 	return -1;
 
 }
 
 int JennicClient::read() {
-	// TODO fix!
+	// TODO check!
 	uint8_t byte = 0;
 	return read(&byte, 1);
 }
@@ -219,16 +217,17 @@ int JennicClient::read(uint8_t *buf, size_t size) {
 	Jennic.write(numBytes);
 
 
-	while(Jennic.available() < (2 + numBytes))
+	while(Jennic.available() < (1 + numBytes))
 		;
 
-	if(Jennic.read() == 0x10 && Jennic.read() == 0x01){
+	if(opCode == 0x10 && Jennic.read() == 0x01){
 		for(uint8_t i = 0; i < numBytes; i++){
 			buf[i] = Jennic.read();
 		}
-
+		opCode = -1;
 		return numBytes;
 	}
+	opCode = -1;
 	return -1;
 }
 
@@ -252,19 +251,24 @@ int JennicClient::peek() {
   	Jennic.write((uint8_t) _destPort);
 
 	// wait for response
-	while(Jennic.available() < 2)
+	while(Jennic.available() < 1)
 		;
-	if(Jennic.read() == 0x11){
+
+	if(opCode == 0x11){
+		
 		// if theres nothing to peek payload length i 0x00
-		if (Jennic.read() == 0x00)
+		if (Jennic.read() == 0x00){
+			opCode = -1;
 			return -1;
+		}
 
 		while(Jennic.available() < 1)
 			;
 		
+		opCode = -1;
 		return Jennic.read();
 	}
-  	
+  	opCode = -1;
   	return -1;
 }
 

@@ -10,7 +10,7 @@ class JennicClient : public Client {
 
 public:
   JennicClient();
-  JennicClient(uint16_t localPort);
+  JennicClient(uint16_t localPort, IPv6Address);
   ~JennicClient();
 
   uint8_t status();

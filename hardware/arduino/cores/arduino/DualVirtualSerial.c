@@ -69,8 +69,11 @@ static bool jennic_in_programming_mode = false;
 
 /** Pointer to Callback-Function which is called if Jennic recieved something */
 void (*callback)(void);
-void nothing(void);
+void nothing(void); // TODO remove
 void setTcpRecieveCallback(void(*fun)(void));
+
+/** command decode */
+int8_t opCode = -1;
 
 /** handle incoming Data on the Arduino CDC tty */
 void CDC_Arduino_In_Task(void);
@@ -283,20 +286,26 @@ ISR(USART1_UDRE_vect, ISR_BLOCK)
 ISR(USART1_RX_vect, ISR_BLOCK)
 {
   uint8_t receivedByte;
-
-  if (ringbuf_elements(&USARTtoUSB_Buffer) >= ringbuf_size(&USARTtoUSB_Buffer) - 1 )
-    return;
+  // Obsolete bc ringbuf_put drops it if buf is full.
+  // if (ringbuf_elements(&USARTtoUSB_Buffer) >= ringbuf_size(&USARTtoUSB_Buffer) - 1 )
+  //  return;
 
   receivedByte = UDR1;
-  	
+
   // TODO check for callback Code
   // set var if waiting for normal reply.
   // if not awaiting normal reply and recievedByte == 42 call callback.
+  if(!jennic_in_programming_mode && opCode < 0){
+  	if(recievedByte == 42){
+	  	callback();
+  	}
+	opCode = recievedByte;
+  }
 
-  // TODO remove if condition cause we need the serial in even if theres no USB Connection
-  //if (USB_DeviceState == DEVICE_STATE_Configured) {
+  // removed if condition cause we need the serial in even if theres no USB Connection
+  // if (USB_DeviceState == DEVICE_STATE_Configured) {
     ringbuf_put(&USARTtoUSB_Buffer, receivedByte);
-  //}
+  // }
 }
 
 /** Event handler for the CDC Class driver Line Encoding Changed event.
