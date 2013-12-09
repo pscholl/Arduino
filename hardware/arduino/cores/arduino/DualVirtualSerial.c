@@ -294,12 +294,14 @@ ISR(USART1_RX_vect, ISR_BLOCK)
 
   // TODO check for callback Code
   // set var if waiting for normal reply.
-  // if not awaiting normal reply and recievedByte == 42 call callback.
+  // if not awaiting normal reply and receivedByte == 42 call callback.
   if(!jennic_in_programming_mode && opCode < 0){
-  	if(recievedByte == 42){
+  	if(receivedByte == 42){
 	  	callback();
+		return;
   	}
-	opCode = recievedByte;
+	opCode = receivedByte;
+	return;
   }
 
   // removed if condition cause we need the serial in even if theres no USB Connection
@@ -331,6 +333,7 @@ void EVENT_CDC_Device_LineEncodingChanged(USB_ClassInfo_CDC_Device_t* const CDCI
  */
 void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo)
 {
+
 	//CDC_Device_SendString(&VirtualSerial_CDC0_Interface, "CDC_Device_ControlLineStateChanged");
 	if(CDCInterfaceInfo->Config.ControlInterfaceNumber == 2)
         {
@@ -354,28 +357,14 @@ void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const C
     			jennic_reset_time    = millis(); /* returns the usb frame clock in ms */
   		}
 	}
-	else if(millis() > 5000) // TODO wait 5000milis after USB Attach
-	{
-	// Reset Arduino for Programming
-		if(CDCInterfaceInfo->State.LineEncoding.BaudRateBPS == 1200)
-                {
-                        bool currentDTRState  = (CDCInterfaceInfo->State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR);
+	else if(CDCInterfaceInfo->State.LineEncoding.BaudRateBPS==1200)
+        {
+        	bool currentDTRState  = (CDCInterfaceInfo->State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR);
 
-                        if(currentDTRState == 0)
-{
-                                run_bootloader();
-				
-				//MCUCR = (1<<IVCE); // change reset vector to bootloader section
-                                //MCUCR = (1<<IVSEL);
-                                //wdt_enable(WDTO_120MS);
-                        }
-                        else
-                        {
-                                //wdt_disable();
-                                wdt_reset();
-                        }
-                } // baudrate check
+		if (!currentDTRState && millis() > 5000)
+                        run_bootloader();
 
+		
 	}
 }
 
@@ -475,6 +464,7 @@ void CDC_In_Task()
 {
  /* Read bytes from the USB OUT endpoint and transmit to jennic if programming mode */
  if ( ringbuf_elements(&USBtoUSART_Buffer) < ringbuf_size(&USBtoUSART_Buffer)-2 ) {
+   // TODO check int16_t type
    int16_t ReceivedByte = CDC_Device_ReceiveByte(&VirtualSerial_CDC1_Interface);
    if ( !(ReceivedByte < 0) )
      ringbuf_put(&USBtoUSART_Buffer, ReceivedByte);

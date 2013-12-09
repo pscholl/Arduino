@@ -86,8 +86,10 @@ public class DfuUploader extends Uploader  {
     // Toggle 1200 bps on selected serial port to force board reset.
     System.out.println("Forcing reset using 1200bps open/close on port "
                     + uploadPort);
-    
-    Serial.touchPort(uploadPort, 1200);
+
+    if (!Serial.touchPort(uploadPort, 1200)) {
+        System.err.println( "unable to reset, maybe wrong serial port configured?");
+    }
 
     // try a few times until the atmel got enumerated
     int TRIES = 30, i=0;
@@ -111,11 +113,11 @@ public class DfuUploader extends Uploader  {
     /* fix re-open to dfu-mode bug */
     boolean touched = false;
     while(!touched){
-		//executeUploadCommand(start_cmd);
-  		touched = Serial.touchPort(uploadPort,9600);
+        	//executeUploadCommand(start_cmd);
     	try{Thread.sleep(100);}
-	catch(Exception e){}
-     }
+        catch(Exception e){}
+	touched = Serial.touchPort(uploadPort,9600);
+    }
 
     //executeUploadCommand(start_cmd);
 
