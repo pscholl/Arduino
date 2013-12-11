@@ -59,8 +59,8 @@ JennicClient JennicServer::available()
 	uint16_t port = 0;
 	port = (uint16_t) Jennic.read() << 8;
 	port = (uint16_t) Jennic.read();
-
-	return new JennicClient(port, ip);
+	
+	return JennicClient(port, ip);
 }
 
 size_t JennicServer::write(uint8_t b) 
@@ -76,7 +76,7 @@ size_t JennicServer::write(const uint8_t *buffer, size_t size)
 	Jennic.write(0x15);
 
 	uint8_t s = (uint8_t) size;
-	s += 2 // payload = size + 2bytes port
+	s += 2; // payload = size + 2bytes port
 	// write payload length
 	Jennic.write(s);
 
@@ -85,7 +85,7 @@ size_t JennicServer::write(const uint8_t *buffer, size_t size)
 	Jennic.write((uint8_t) _port);
 
 	for(uint8_t i = 0; i < (uint8_t) size; i++){
-		Jennic.write(buf[i]);
+		Jennic.write(buffer[i]);
 	}
 	
 	while(Jennic.available() < 1)
