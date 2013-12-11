@@ -286,7 +286,9 @@ uint8_t JennicClient::connected() {
 	// OR there ist still something to read (peek for it).
 	// (atm Connection and Data is dropped by the Jennic if
 	// connection closes)
-	return -1;
+	if(available() == -1)
+		return 0;
+	return 1;
 }
 
 uint8_t JennicClient::status() {
@@ -299,7 +301,8 @@ uint8_t JennicClient::status() {
 
 // the next function allows us to use the client returned by
 // EthernetServer::available() as the condition in an if-statement.
-
 JennicClient::operator bool() {
-  return available();
+	if(available() > 0)
+		return true;
+	return false;
 }
