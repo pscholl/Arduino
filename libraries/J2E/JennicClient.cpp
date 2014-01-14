@@ -58,6 +58,7 @@ int JennicClient::connect(const char* host, uint16_t port) {
   	Jennic.write((uint8_t) port >> 8);
   	Jennic.write((uint8_t) port);
 	
+
 	// send host
   	for (i = 0; host[i]; i++)
   		Jennic.write(host[i]);
@@ -90,6 +91,9 @@ int JennicClient::connect(IPv6Address ip, uint16_t port) {
 	// Send Jennic Connect command
   	Jennic.write(0x0D);
   	Jennic.write(0x12);
+  	
+	Serial.println(0x0D);
+  	Serial.println(0x12);
 
 	_destIp = ip;
 	_destPort = port;
@@ -99,17 +103,30 @@ int JennicClient::connect(IPv6Address ip, uint16_t port) {
 		uint8_t tmp = ip[i] >> 8;
 		Jennic.write(tmp);
 		Jennic.write((uint8_t) ip[i]);
+
+		Serial.println(tmp);
+		Serial.println((uint8_t) ip[i]);
 	}
 
 	// send port
-  	Jennic.write((uint8_t) port >> 8);
-  	Jennic.write((uint8_t) port);
+  	Jennic.write(port >> 8);
+  	Jennic.write(port);
+
+	Serial.println(port >> 8);
+  	Serial.println(port);
 	
 	// wait for response
 	while(Jennic.available() < 2)
 		;
+	
+
+	//Serial.println(opCode);
+	//Serial.println(Jennic.read());
+	//Serial.println(Jennic.read());
+	//
+	//return false;
 	// opcode payloadlength ok/notok
-	if(opCode == 0x16 && Jennic.read() == 0x01 && Jennic.read() == 0x01){
+	if(opCode == 0x0D & (Jennic.read() == 0x01) & (Jennic.read() == 0x01)){
 		opCode = -1;
 		return true;
 	}

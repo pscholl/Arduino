@@ -57,7 +57,8 @@
 #define PWR_SENSORS _BV(6) /* PC6, on by default, toggle for reset */
 
 static uint8_t usbtouart[128], uarttousb[128], serialRx[128]; // need size of power two!
-struct ringbuf USARTtoUSB_Buffer, USBtoUSART_Buffer;
+struct ringbuf USARTtoUSB_Buffer;
+struct ringbuf USBtoUSART_Buffer;
 struct ringbuf serialRx_Buffer;
 /** used to toggle the reset lines of the Jennic module, entering programming
  * mode and resetting */
@@ -286,9 +287,9 @@ ISR(USART1_UDRE_vect, ISR_BLOCK)
 ISR(USART1_RX_vect, ISR_BLOCK)
 {
   uint8_t receivedByte;
-  // Obsolete bc ringbuf_put drops it if buf is full.
-  // if (ringbuf_elements(&USARTtoUSB_Buffer) >= ringbuf_size(&USARTtoUSB_Buffer) - 1 )
-  //  return;
+  
+  if (ringbuf_elements(&USARTtoUSB_Buffer) >= ringbuf_size(&USARTtoUSB_Buffer) - 1 )
+    return;
 
   receivedByte = UDR1;
 
@@ -318,7 +319,7 @@ void EVENT_CDC_Device_LineEncodingChanged(USB_ClassInfo_CDC_Device_t* const CDCI
  {
 
 	if(CDCInterfaceInfo->Config.ControlInterfaceNumber == 2 && jennic_in_programming_mode)
-	{
+{
   	/* only allowed in programming mode through programmer (jenprog) */
     	Serial_Config(CDCInterfaceInfo->State.LineEncoding.BaudRateBPS, 
             CDCInterfaceInfo->State.LineEncoding.DataBits, 

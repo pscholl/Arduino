@@ -33,6 +33,7 @@ void UARTtoJennic::end(void)
 
 int UARTtoJennic::available(void)
 {
+	// Serial.println(ringbuf_elements(&USARTtoUSB_Buffer));
 	return ringbuf_elements(&USARTtoUSB_Buffer);
 }
 
@@ -77,7 +78,15 @@ void UARTtoJennic::flush(void)
 
 size_t UARTtoJennic::write(u8 c)
 {
-	return ringbuf_put(&USBtoUSART_Buffer, c);
+	//Serial.print("called write: ");
+	//Serial.println(c);
+	
+	uint8_t ret = ringbuf_put(&USBtoUSART_Buffer, c);
+
+	if (!(UCSR1B & (1<<UDRIE1)))
+	   UCSR1B |= (1<<UDRIE1);
+
+	return ret;
 }
 
 

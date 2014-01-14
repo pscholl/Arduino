@@ -88,11 +88,11 @@ extern "C"{
 		void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo);
 
 struct ringbuf {
-	uint8_t *data;
+	uint8_t volatile *data;
 	uint8_t mask;
 
       	/* XXX these must be 8-bit quantities to avoid race conditions. */
-        uint8_t put_ptr, get_ptr;
+        uint8_t volatile put_ptr, get_ptr;
 };
 
 extern int8_t opCode;
