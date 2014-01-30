@@ -11,7 +11,7 @@ For wireless communiction the Arduino EthernetClient and EthernetServer classes
 will be implemented, using the jennic for 6LoWPAN over ZigBee.
 
 [1]: http://www.arduino.cc/ "Arduino"
-[2]: https://github.com/teco-kit/Jennisense/wiki/Hardware#jnode-a-jennic-board-with-small-footprint-and-plenty-of-sensors "JNode"
+[2]: https://github.com/teco-kit/Jennisense/wiki/Hardware#jnode---small-footprint-and-plenty-of-sensors
 [3]: http://www.fourwalledcubicle.com/LUFA.php "LUFA"
 
 
