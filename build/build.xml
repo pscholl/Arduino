@@ -324,12 +324,12 @@
   
   <target name="linux-build" depends="revision-check, linux-checkos, subprojects-build" description="Build linux version">
     <mkdir dir="linux/work" />
-    
+
     <copy todir="linux/work">
       <fileset dir="shared" includes="lib/**" />
       <fileset file="shared/revisions.txt" />
     </copy>
-    
+
     <copy todir="linux/work">
       <fileset dir="linux/dist" includes="lib/**" />
     </copy>
@@ -343,6 +343,7 @@
     </antcall>
 
     <copy todir="linux/work" file="linux/dist/arduino" />
+    <fixcrlf file="linux/work/arduino" eol="lf" eof="remove" />
     <chmod perm="755" file="linux/work/arduino" />
 
     <copy todir="linux/work/hardware">
