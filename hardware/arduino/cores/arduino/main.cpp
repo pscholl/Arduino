@@ -3,6 +3,9 @@
 
 int main(void)
 {
+
+	DDRF |= (_BV(4));
+	PORTF &= ~(_BV(4));
 	/* Arduino  init and setup */
 	init();
 	lufaInit();

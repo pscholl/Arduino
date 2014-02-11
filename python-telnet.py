@@ -21,14 +21,16 @@ class chatServer(threading.Thread):
         lock.acquire()
         clients.append(self)
         lock.release()
-        print '%s:%s connected.' % self.address
+        #print '%s:%s connected.' % self.address
+        print "connected"
         while True:
             data = self.socket.recv(1024)
             if not data:
                 break
             sys.stdout.write(data)
         self.socket.close()
-        print '%s:%s disconnected.' % self.address
+        #print '%s:%s disconnected.' % self.address
+        print "disconnect"
         lock.acquire()
         clients.remove(self)
         lock.release()
