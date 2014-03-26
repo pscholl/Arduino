@@ -9,7 +9,9 @@ extern "C" {
 #include "JennicClient.h"
 #include "JennicServer.h"
 
-
+// TODO:
+// - timeout when jennic doesn't send an answer.
+// - make sure that Jennic.available() == 0 in case of failure
 
 //uint16_t JennicClient::_destPort;
 //uint16_t JennicClient::_localPort;
@@ -142,13 +144,13 @@ size_t JennicClient::write(const uint8_t *buf, size_t size) {
 	// send opcode 	
 	Jennic.write(0x0E);
 
-	Serial.println(0x0E);
+	//Serial.println(0x0E);
 
 	// send payload length
 	uint8_t s = (uint8_t) size;
 	s += 18;
 	Jennic.write(s);
-	Serial.println(s);
+	//Serial.println(s);
 
 	// send ip address
 	for(uint8_t i = 0; i < 8; i++){
@@ -156,41 +158,44 @@ size_t JennicClient::write(const uint8_t *buf, size_t size) {
 		Jennic.write(tmp);
 		Jennic.write((uint8_t) _destIp[i]);
 
-		Serial.println(tmp);
-		Serial.println((uint8_t) _destIp[i]);
+		//Serial.println(tmp);
+		//Serial.println((uint8_t) _destIp[i]);
 	}
 	
 	// send port
   	Jennic.write(_destPort >> 8);
   	Jennic.write(_destPort);
   	
-	Serial.println(_destPort >> 8);
-  	Serial.println(_destPort);
+	//Serial.println(_destPort >> 8);
+  	//Serial.println(_destPort);
 	
 	
 	// send data
 	for(uint8_t i = 0; i < (uint8_t) size; i++){
 		Jennic.write(buf[i]);
-		Serial.println(buf[i]);
+		//Serial.println(buf[i]);
   	}
-	Serial.println("send write...");
+	//Serial.println("send write...");
 	
 	//while(true){
-	//	if(Jennic.available())
+	//	if(Jennic.available()){
+	//		Serial.println(opCode);
 	//		Serial.println(Jennic.read());
+	//	}
 	//}
 
 	// wait for response
-	while(Jennic.available() < 1)
+	while(Jennic.available() < 2)
 		;
 	
-	Serial.println("send response...");
-
-	if(opCode == 0x0E && Jennic.read() == 0x00){
+	// Serial.println("received response...");
+	// TODO check if Data was sent.
+	if(opCode == 0x0E && Jennic.read() == 0x01){
 		opCode = -1;
-		return size;
+		return Jennic.read();
 	}
-
+	
+	Jennic.read();
 	opCode = -1;
 	return 0;
 }
@@ -208,19 +213,34 @@ int JennicClient::available() {
 		Jennic.write((uint8_t) _destIp[i]);
 	}
 	
-	// sned port
-  	Jennic.write((uint8_t) _destPort >> 8);
-  	Jennic.write((uint8_t) _destPort);
-
+	// send port
+  	Jennic.write(_destPort >> 8);
+  	Jennic.write(_destPort);
+  	
 	// wait for response
 	while(Jennic.available() < 2)
 		;
 	
+	
+	//Serial.println("-----------start------------");
+	//Serial.println(opCode);
+	//Serial.println(Jennic.read());
+	//Serial.println(Jennic.read());
+	//Serial.println(Jennic.read());
+	//Serial.println(Jennic.read());
+	//Serial.println("------------end-------------");
+
+
 	if(opCode == 0x0F && Jennic.read() == 0x01){
+		//Serial.println("opcode 0x0F answered");
 		opCode = -1;
-		return Jennic.read();
+		int8_t a = Jennic.read();
+		//Serial.print("bytes available: ");
+		//Serial.println(a);
+		return a;
 	}
 
+	Jennic.read();
 	opCode = -1;
 	return -1;
 
@@ -248,20 +268,31 @@ int JennicClient::read(uint8_t *buf, size_t size) {
 	}
 	
 	// send port
-  	Jennic.write((uint8_t) _destPort >> 8);
-  	Jennic.write((uint8_t) _destPort);
+  	Jennic.write(_destPort >> 8);
+  	Jennic.write(_destPort);
 	
 	// read x byte
 	uint8_t numBytes = (uint8_t) size;
 	Jennic.write(numBytes);
 
+	//Serial.println("send read params to jennic");
 
-	while(Jennic.available() > 0)
+	while(Jennic.available() < 1)
 		;
+
+	//Serial.println("Jennic answered read call");
+	//Serial.print("opcode was: ");
+	//Serial.println(opCode);
 
 	if(opCode == 0x10){
 		numBytes = Jennic.read(); // #payload length bytes
+
+		//Serial.print("Bytes to read: ");
+		//Serial.println(numBytes);
+		
 		for(uint8_t i = 0; i < numBytes; i++){
+			while(!Jennic.available())
+				;
 			buf[i] = Jennic.read();
 		}
 		opCode = -1;
@@ -287,11 +318,11 @@ int JennicClient::peek() {
 	}
 	
 	// send port
-  	Jennic.write((uint8_t) _destPort >> 8);
-  	Jennic.write((uint8_t) _destPort);
+  	Jennic.write(_destPort >> 8);
+  	Jennic.write(_destPort);
 
 	// wait for response
-	while(Jennic.available() < 1)
+	while(Jennic.available() > 1)
 		;
 
 	if(opCode == 0x11){
@@ -318,8 +349,34 @@ void JennicClient::flush() {
 }
 
 void JennicClient::stop() {
-	// TODO: say Jennic to close the Connection
+	Jennic.write(0x16);
+	Jennic.write(0x12);
+	
+	// send ip address
+	for(uint8_t i = 0; i < 8; i++){
+		uint8_t tmp = _destIp[i] >> 8;
+		Jennic.write(tmp);
+		Jennic.write((uint8_t) _destIp[i]);
+	}
+	
+	// send port
+  	Jennic.write(_destPort >> 8);
+  	Jennic.write(_destPort);
+	
+
+	// wait for response
+	while(Jennic.available() < 1)
+		;
+
+	if(opCode == 0x16 && Jennic.read() == 0x00){
+  		opCode = -1;
+		return;
+	}
+
+  	opCode = -1;
+  	return;
 }
+
 
 uint8_t JennicClient::connected() {
 	// TODO: return if Jennic has still a Connection 
@@ -327,7 +384,10 @@ uint8_t JennicClient::connected() {
 	// (atm Connection and Data is dropped by the Jennic if
 	// connection closes) if(available() == -1)
 	//	return 0;
-	return 1;
+	//return (available() > -1) ? true : false;
+	if(available() > -1)
+		return true;
+	return false;
 }
 
 uint8_t JennicClient::status() {
@@ -341,7 +401,7 @@ uint8_t JennicClient::status() {
 // the next function allows us to use the client returned by
 // EthernetServer::available() as the condition in an if-statement.
 JennicClient::operator bool() {
-	if(available() > 0)
+	if(available() > -1)
 		return true;
 	return false;
 }
