@@ -37,49 +37,63 @@ void SerialCDC::end(void)
 
 int SerialCDC::available(void)
 {
-	return ringbuf_elements(&serialRx_Buffer);
+  return ringbuf_elements(&serialRx_Buffer);
 }
 
 int SerialCDC::peek(void)
 {
-	ringbuf *r = &serialRx_Buffer;
-	if(((r->put_ptr - r->get_ptr) & r->mask) > 0) {
-    		unsigned char c = r->data[r->get_ptr];
-		return c;
-	} else {
-		return -1;
-	}
+  ringbuf *r = &serialRx_Buffer;
+  if(((r->put_ptr - r->get_ptr) & r->mask) > 0) {
+        unsigned char c = r->data[r->get_ptr];
+    return c;
+  } else {
+    return -1;
+  }
 }
 
 int SerialCDC::read(void)
 {
-	if(ringbuf_elements(&serialRx_Buffer) > 0)
-	{
-		unsigned char c =  ringbuf_get(&serialRx_Buffer);
-		return c;
-	}
-	else{
-		return -1;
-	}
+  if(ringbuf_elements(&serialRx_Buffer) > 0)
+  {
+    unsigned char c =  ringbuf_get(&serialRx_Buffer);
+    return c;
+  }
+  else{
+    return -1;
+  }
 }
 
 void SerialCDC::flush(void)
 {
-	// according to the Arduino Docs it just waits to
-	// complete the outgoing transmissions.
-	// CDC_Device_Flush(&VirtualSerial_CDC0_Interface);
-	CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
-	USB_USBTask();
+  // according to the Arduino Docs it just waits to
+  // complete the outgoing transmissions.
+  // CDC_Device_Flush(&VirtualSerial_CDC0_Interface);
+  CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
+  USB_USBTask();
 }
 
 size_t SerialCDC::write(u8 c)
 {
-	if(ENDPOINT_READYWAIT_NoError == CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, c)){
-		CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
-		USB_USBTask();
-		return 1;
-	}
-	else return -1;
+  /* check first if we can send a packet to the host, otherwise
+   * we might overwrite what's in the buffer */
+  if (USB_DeviceState != DEVICE_STATE_Configured)
+    return 0;
+
+  Endpoint_SelectEndpoint(VirtualSerial_CDC0_Interface.Config.DataINEndpoint.Address);
+
+  uint8_t status;
+  do {
+    while (!Endpoint_IsINReady()) {
+      lufaLoop();
+    }
+
+   status = CDC_Device_SendByte(&VirtualSerial_CDC0_Interface, c);
+
+    CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
+    USB_USBTask();
+  } while (status == ENDPOINT_READYWAIT_Timeout);
+
+  return status == ENDPOINT_READYWAIT_NoError;
 }
 
 // This operator is a convenient way for a sketch to check whether the
@@ -90,11 +104,11 @@ size_t SerialCDC::write(u8 c)
 // We add a short delay before returning to fix a bug observed by Federico
 // where the port is configured (lineState != 0) but not quite opened.
 SerialCDC::operator bool() {
-	if((VirtualSerial_CDC0_Interface.State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR) == true) return true;
-	else return false;
-	//bool result = false;
-	// TODO check if CDC Connection is opened on the host side.
-	//return result;
+  if((VirtualSerial_CDC0_Interface.State.ControlLineStates.HostToDevice & CDC_CONTROL_LINE_OUT_DTR) == true) return true;
+  else return false;
+  //bool result = false;
+  // TODO check if CDC Connection is opened on the host side.
+  //return result;
 }
 
 SerialCDC Serial;
