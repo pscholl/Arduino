@@ -82,7 +82,7 @@ size_t SerialCDC::write(u8 c)
   Endpoint_SelectEndpoint(VirtualSerial_CDC0_Interface.Config.DataINEndpoint.Address);
 
   uint8_t status;
-  do {
+  //do {
     while (!Endpoint_IsINReady()) {
       lufaLoop();
     }
@@ -91,7 +91,7 @@ size_t SerialCDC::write(u8 c)
 
     CDC_Device_USBTask(&VirtualSerial_CDC0_Interface);
     USB_USBTask();
-  } while (status == ENDPOINT_READYWAIT_Timeout);
+  //} while (status == ENDPOINT_READYWAIT_Timeout);
 
   return status == ENDPOINT_READYWAIT_NoError;
 }
