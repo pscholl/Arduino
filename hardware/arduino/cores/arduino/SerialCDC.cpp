@@ -83,7 +83,7 @@ size_t SerialCDC::write(u8 c)
 
   uint8_t status;
   //do {
-    while (!Endpoint_IsINReady()) {
+    while (!Endpoint_IsINReady() && USB_DeviceState == DEVICE_STATE_Configured) {
       lufaLoop();
     }
 
