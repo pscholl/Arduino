@@ -365,7 +365,7 @@ void JennicClient::stop() {
 	
 
 	// wait for response
-	while(Jennic.available() < 1)
+	while(Jennic.available() > 1)
 		;
 
 	if(opCode == 0x16 && Jennic.read() == 0x00){
