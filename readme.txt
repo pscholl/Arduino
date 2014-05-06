@@ -14,6 +14,12 @@ will be implemented, using the jennic for 6LoWPAN over ZigBee.
 [2]: https://github.com/teco-kit/Jennisense/wiki/Hardware#jnode---small-footprint-and-plenty-of-sensors
 [3]: http://www.fourwalledcubicle.com/LUFA.php "LUFA"
 
+Installation
+============
+
+For linux an updated build is available here [1], additionally the dfu-programmer [2] needs to be installed.
+
+[1]: https://github.com/pscholl/Arduino/raw/master/build/linux/arduino-0104-linux.tgz
 
 CREDITS
 -------
