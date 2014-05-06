@@ -17,9 +17,10 @@ will be implemented, using the jennic for 6LoWPAN over ZigBee.
 Installation
 ============
 
-For linux an updated build is available here [1], additionally the dfu-programmer [2] needs to be installed.
+Forlinux an updated build is available here [1], additionally the dfu-programmer [2] needs to be installed.
 
 [1]: https://github.com/pscholl/Arduino/raw/master/build/linux/arduino-0104-linux.tgz
+[2]: http://dfu-programmer.sourceforge.net/
 
 CREDITS
 -------
