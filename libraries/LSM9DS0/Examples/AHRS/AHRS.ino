@@ -42,7 +42,7 @@ void loop() {
    orientation_t *o = 
        AHRSupdate(m.gx, m.gy, m.gz,
                   m.ax, m.ay, m.az,
-                  m.mx, m.my, -m.mz,
+                  m.mx, m.my, m.mz,
                   (micros() - time)/1e6);
 
    Serial.print(o->q0); Serial.print("\t");
