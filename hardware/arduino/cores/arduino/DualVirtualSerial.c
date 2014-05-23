@@ -412,8 +412,8 @@ void Serial_Config(uint32_t Baudrate, uint8_t DataBits, uint8_t StopBits, uint8_
   UCSR1C = ConfigMask;
   UCSR1B = ((1 << RXCIE1) | (1 << TXEN1) | (1 << RXEN1));
 
-  /* enable RTS/CTS flow control */
-  UCSR1D = (1<<RTSEN)|(1<<CTSEN);
+  /* enable RTS/CTS flow control XXX: conflict with CC3000 */
+  //UCSR1D = (1<<RTSEN)|(1<<CTSEN);
 }
 
 /** restart jennic and set to programming or normal mode */
