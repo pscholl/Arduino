@@ -39,7 +39,7 @@ static const uint8_t SDA = 2;
 static const uint8_t SCL = 3;
 
 // Map SPI port to 'new' pins D14..D17
-//static const uint8_t SS   = 17; this is not connected
+static const uint8_t SS   = 17; // Connected to the CC3000 module
 static const uint8_t MOSI = 16;
 static const uint8_t MISO = 14;
 static const uint8_t SCK  = 15;
