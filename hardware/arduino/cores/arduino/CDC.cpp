@@ -101,6 +101,8 @@ bool WEAK CDC_Setup(Setup& setup)
 
 		if (CDC_SET_CONTROL_LINE_STATE == r)
 		{
+      static unsigned int lasttime = micros();
+
 			_usbLineInfo.lineState = setup.wValueL;
 
 			// auto-reset into the bootloader is triggered when the port, already 
@@ -111,7 +113,9 @@ bool WEAK CDC_Setup(Setup& setup)
 				// We check DTR state to determine if host port is open (bit 0 of lineState).
 				if ((_usbLineInfo.lineState & 0x01) == 0) {
 #ifdef USE_DFU_BOOTLOADER
-          run_bootloader();
+	        uint32_t bladdr = (FLASHEND - bootloader_size()) / 2 + 1;
+					*(uint16_t *)0x0800 = bladdr;
+          //run_bootloader();
 #else
 					*(uint16_t *)0x0800 = 0x7777;
 #endif
