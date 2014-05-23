@@ -1,32 +1,53 @@
-Arduino is an open-source physical computing platform based on a simple i/o
-board and a development environment that implements the Processing/Wiring
-language. Arduino can be used to develop stand-alone interactive objects or
-can be connected to software on your computer (e.g. Flash, Processing, MaxMSP).
-The boards can be assembled by hand or purchased preassembled; the open-source
-IDE can be downloaded for free.
+Arduino JNode Port
+==================
 
-For more information, see the website at: http://www.arduino.cc/
-or the forums at: http://arduino.cc/forum/
+This Arduino Fork ports the [Arduino][1] Environment to the [JNode][2].
+Therefore the adapted Firmware provides two virtual Serial Interfaces via
+the [LUFA][3] USB Library.
+The first as an usual Arduino Serial Connection as known from the Arduino Leonardo.
+The second is used to programm the Jennic.
 
-To report a bug in the software, go to:
-http://github.com/arduino/Arduino/issues
+For wireless communiction the Arduino EthernetClient and EthernetServer classes 
+will be implemented, using the jennic for 6LoWPAN over ZigBee.
 
-For other suggestions, use the forum:
-http://arduino.cc/forum/index.php/board,21.0.html
+[1]: http://www.arduino.cc/ "Arduino"
+[2]: https://github.com/teco-kit/Jennisense/wiki/Hardware#jnode---small-footprint-and-plenty-of-sensors
+[3]: http://www.fourwalledcubicle.com/LUFA.php "LUFA"
 
-INSTALLATION
-Detailed instructions are in reference/Guide_Windows.html and
-reference/Guide_MacOSX.html.  For Linux, see the Arduino playground:
-http://www.arduino.cc/playground/Learning/Linux
+Installation
+============
+
+For linux an updated build is available here [1], additionally the dfu-programmer [2] needs to be installed.
+
+[1]: https://github.com/pscholl/Arduino/raw/jnode_arduino/build/linux/arduino-0104-linux.tgz
+[2]: http://dfu-programmer.sourceforge.net/
+
+First Steps
+===========
+
+ Try the various samples of the included sensors and wifi module, you can find
+them under "File -> Examples -> <Library-X>". The Libraries know to work are:
+
+ - LSM9DS0 (imu sensor)
+ - CC3000  (wifi module)
+ - SHT2X   (hygro module)
+
+ The VCNL400 and MPL115A2 have been updated and probably need some small changes
+in their drivers. 
+
+ Make sure to have the "jNode" selected as the target Board under "Tools ->
+Board" and the correct serial port.
 
 CREDITS
-Arduino is an open source project, supported by many.
-
+-------
 The Arduino team is composed of Massimo Banzi, David Cuartielles, Tom Igoe,
 Gianluca Martino, Daniela Antonietti, and David A. Mellis.
+Arduino is an open source project, supported by many.
 
 Arduino uses the GNU avr-gcc toolchain, avrdude, avr-libc, and code from
 Processing and Wiring.
+
+The LUFA Library is written by Dean Camera.
 
 Icon and about image designed by ToDo: http://www.todo.to.it/
 
