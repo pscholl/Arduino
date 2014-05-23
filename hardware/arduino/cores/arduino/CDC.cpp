@@ -18,6 +18,7 @@
 
 #include "Platform.h"
 #include "USBAPI.h"
+#include "atmel_bootloader.h"
 #include <avr/wdt.h>
 
 #if defined(USBCON)
@@ -110,8 +111,7 @@ bool WEAK CDC_Setup(Setup& setup)
 				// We check DTR state to determine if host port is open (bit 0 of lineState).
 				if ((_usbLineInfo.lineState & 0x01) == 0) {
 #ifdef USE_DFU_BOOTLOADER
-					MCUCR = (1<<IVCE); // change reset vector to bootloader section
-					MCUCR = (1<<IVSEL);
+          run_bootloader();
 #else
 					*(uint16_t *)0x0800 = 0x7777;
 #endif
