@@ -14,6 +14,14 @@ will be implemented, using the jennic for 6LoWPAN over ZigBee.
 [2]: https://github.com/teco-kit/Jennisense/wiki/Hardware#jnode---small-footprint-and-plenty-of-sensors
 [3]: http://www.fourwalledcubicle.com/LUFA.php "LUFA"
 
+Cloning this repository
+=======================
+
+Additionally you need to checkout the submodule to get the CC3000 library:
+
+    git submodule init
+    git submodule sync
+
 Installation
 ============
 
