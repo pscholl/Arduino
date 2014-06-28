@@ -17,6 +17,7 @@
 // Function declaration
 
 typedef struct {
+  unsigned long timestamp;
   float q0, q1, q2, q3, exInt, eyInt, ezInt;	// quaternion elements representing the estimated orientation
 } orientation_t;
 
