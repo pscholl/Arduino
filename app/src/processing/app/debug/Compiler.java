@@ -199,6 +199,7 @@ public class Compiler implements MessageConsumer {
     List baseCommandLinker = new ArrayList(Arrays.asList(new String[] {
       avrBasePath + "avr-gcc",
       "-Os",
+      "-Wl,-Map=" + buildPath + File.separator + "build.map",
       "-Wl,--gc-sections"+optRelax,
       "-mmcu=" + boardPreferences.get("build.mcu"),
       "-o",
@@ -213,6 +214,7 @@ public class Compiler implements MessageConsumer {
     baseCommandLinker.add("-L" + buildPath);
     baseCommandLinker.add("-lm");
 
+    System.out.println(baseCommandLinker);
     execAsynchronously(baseCommandLinker);
 
     List baseCommandObjcopy = new ArrayList(Arrays.asList(new String[] {
