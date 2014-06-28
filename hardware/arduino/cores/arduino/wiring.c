@@ -23,6 +23,7 @@
 */
 
 #include "wiring_private.h"
+#include <avr/power.h>
 
 // the prescaler is set so that timer0 ticks every 64 clock cycles, and the
 // the overflow handler is called every 256 ticks.
@@ -191,6 +192,7 @@ void init()
 	// this needs to be called before setup() or some functions won't
 	// work there
 	sei();
+  clock_prescale_set(clock_div_1); // run at full speed per default
 	
 	// on the ATmega168, timer 0 is also used for fast hardware pwm
 	// (using phase-correct PWM would mean that timer 0 overflowed half as often
@@ -205,6 +207,7 @@ void init()
 	// CPU specific: different values for the ATmega128
 	sbi(TCCR0, CS02);
 #elif defined(TCCR0) && defined(CS01) && defined(CS00)
+#error
 	// this combination is for the standard atmega8
 	sbi(TCCR0, CS01);
 	sbi(TCCR0, CS00);
