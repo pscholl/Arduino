@@ -1,3 +1,5 @@
+This project is discontinued, please use the all new and shiny jNoduino https://github.com/pscholl/jnoduino
+
 Arduino JNode Port
 ==================
 
